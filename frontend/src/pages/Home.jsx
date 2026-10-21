@@ -37,6 +37,11 @@ export default function Home() {
           <li key={item}>{item}</li>
         ))}
       </ul>
+      <p>
+        <Link to="/resources">Browse rooms, labs and equipment</Link>
+        {user.role !== ROLES.STUDENT && <> | <Link to="/book">Book a resource</Link></>}
+        {(user.role === ROLES.RESOURCE_ADMIN || user.role === ROLES.SUPER_ADMIN) && <> | <Link to="/approvals">Review requests</Link></>}
+      </p>
       {user.role === ROLES.SUPER_ADMIN && (
         <p>
           <Link to="/admin/users">Manage users and roles</Link>
