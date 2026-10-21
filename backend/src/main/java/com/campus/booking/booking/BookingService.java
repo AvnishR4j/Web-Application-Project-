@@ -36,7 +36,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 public class BookingService {
 
-    private static final int MAX_ATTEMPTS = 12;
+    private static final int MAX_ATTEMPTS = 25;
     static final Duration LATE_CANCEL_WINDOW = Duration.ofHours(72);
 
     public record BookingInput(String resourceId, String title, Instant start, Instant end, int attendees) {
@@ -87,6 +87,12 @@ public class BookingService {
             Optional<Booking> prior = bookings.findByIdempotencyKey(key);
             if (prior.isPresent()) {
                 return prior.get();
+            }
+            // Cheap rejection first: once someone else holds the slot, losers leave here without
+            // opening a transaction, so they stop colliding with each other on retries.
+            List<Violation> early = evaluate(requireResource(in.resourceId()), in, who);
+            if (!early.isEmpty()) {
+                throw new BookingConflictException(early);
             }
             try {
                 return tx.execute(status -> createInTransaction(in, key, who));
@@ -229,7 +235,7 @@ public class BookingService {
     }
 
     private static void backoff(int attempt) {
-        long max = Math.min(200, 10L * attempt);
+        long max = Math.min(300, 15L * attempt);
         try {
             Thread.sleep(ThreadLocalRandom.current().nextLong(5, max + 5));
         } catch (InterruptedException ie) {
