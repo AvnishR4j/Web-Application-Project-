@@ -47,6 +47,17 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+                // Catalog, blocked periods and training: managed by resource admins (and super admins).
+                .requestMatchers(HttpMethod.POST, "/api/resources").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/resources/*").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/blocked-periods").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/blocked-periods/*").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/training").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                // Bookings: approving and listing everything is for admins, the rest for people who book.
+                .requestMatchers(HttpMethod.PATCH, "/api/bookings/*/approve", "/api/bookings/*/reject")
+                    .hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/bookings").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/bookings/**").hasAnyRole("CLUB_ORGANIZER", "RESOURCE_ADMIN", "SUPER_ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -62,7 +73,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(allowedOrigin));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         return source;

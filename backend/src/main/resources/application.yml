@@ -13,6 +13,9 @@ app:
     expiry-minutes: ${JWT_EXPIRY_MINUTES:120}
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  booking:
+    # Time zone used for opening hours. Set BOOKING_ZONE to your campus zone, e.g. America/New_York.
+    zone: ${BOOKING_ZONE:Asia/Kolkata}
   seed-demo-data: ${SEED_DEMO_DATA:false}
 
 server:
