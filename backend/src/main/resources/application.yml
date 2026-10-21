@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: campus-booking
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/campus_booking?replicaSet=rs0}
+      auto-index-creation: true
+
+app:
+  jwt:
+    # Must be at least 32 characters. Override with the JWT_SECRET environment variable.
+    secret: ${JWT_SECRET:dev-only-secret-change-me-dev-only-secret-change-me}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:120}
+  cors:
+    allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  seed-demo-data: ${SEED_DEMO_DATA:false}
+
+server:
+  port: 8080
