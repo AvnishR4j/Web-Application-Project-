@@ -18,27 +18,31 @@ import org.springframework.stereotype.Component;
 
 /**
  * Creates one demo user per role so every role can be tried on a fresh database.
- * Runs only when SEED_DEMO_DATA=true. Never enable this in a deployed environment.
+ * Runs only when SEED_DEMO_DATA=true. The password comes from DEMO_PASSWORD (default Password@123 for local
+ * development). On every start, existing demo users are reset to that password, so changing DEMO_PASSWORD on a
+ * deployed server retires the old one.
  */
 @Component
 public class DemoDataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DemoDataSeeder.class);
-    static final String DEMO_PASSWORD = "Password@123";
 
     private final UserRepository users;
     private final ResourceRepository resources;
     private final ClubRepository clubs;
     private final PasswordEncoder encoder;
     private final boolean enabled;
+    private final String password;
 
     public DemoDataSeeder(UserRepository users, ResourceRepository resources, ClubRepository clubs,
-                          PasswordEncoder encoder, @Value("${app.seed-demo-data}") boolean enabled) {
+                          PasswordEncoder encoder, @Value("${app.seed-demo-data}") boolean enabled,
+                          @Value("${app.demo-password}") String password) {
         this.users = users;
         this.resources = resources;
         this.clubs = clubs;
         this.encoder = encoder;
         this.enabled = enabled;
+        this.password = password;
     }
 
     @Override
@@ -64,13 +68,16 @@ public class DemoDataSeeder implements CommandLineRunner {
             club.setOrganizerEmails(List.of("organizer@campus.test"));
             clubs.save(club);
         }
-        log.warn("Demo users seeded (password: {}). Do not use this setting in production.", DEMO_PASSWORD);
+        log.warn("Demo users are ready. Their password is DEMO_PASSWORD; share it only with people who should sign in.");
     }
 
     private void seed(String name, String email, Role role, String department) {
-        if (!users.existsByEmail(email)) {
-            users.save(new User(name, email, encoder.encode(DEMO_PASSWORD), role, department));
-        }
+        users.findByEmail(email).ifPresentOrElse(existing -> {
+            if (!encoder.matches(password, existing.getPasswordHash())) {
+                existing.setPasswordHash(encoder.encode(password));
+                users.save(existing);
+            }
+        }, () -> users.save(new User(name, email, encoder.encode(password), role, department)));
     }
 
     private void seedResource(String name, ResourceType type, String location, int capacity, int buffer,

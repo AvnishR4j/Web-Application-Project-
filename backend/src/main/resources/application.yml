@@ -29,6 +29,7 @@ app:
     limit: ${NOSHOW_LIMIT:3}
     window-days: ${NOSHOW_WINDOW_DAYS:60}
   seed-demo-data: ${SEED_DEMO_DATA:false}
+  demo-password: ${DEMO_PASSWORD:Password@123}
 
 server:
   port: 8080

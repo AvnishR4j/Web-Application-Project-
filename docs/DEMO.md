@@ -1,6 +1,6 @@
 # Demo script
 
-A walk through every workflow in about 15 minutes, using the demo accounts. Every password is `Password@123`.
+A walk through every workflow in about 15 minutes, using the demo accounts. Every account uses `DEMO_PASSWORD` (`Password@123` when running locally; ask the team for the live site's).
 
 ## Before you start
 

@@ -58,15 +58,20 @@ Run the backend tests with `cd backend && mvn test`. The concurrency and workflo
 | `CHECKIN_SECRET` | `JWT_SECRET` | Signs the rotating check-in codes |
 | `NOSHOW_LIMIT` / `NOSHOW_WINDOW_DAYS` | 3 / 60 | Missed events that pause new registrations (0 turns it off) |
 
-### Demo accounts (only when `SEED_DEMO_DATA=true`, development only)
+### Demo accounts (only when `SEED_DEMO_DATA=true`)
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Student | student@campus.test (also student2@, student3@) | Password@123 |
-| Club organizer | organizer@campus.test | Password@123 |
-| Faculty advisor | advisor@campus.test | Password@123 |
-| Resource admin | resources@campus.test | Password@123 |
-| Super admin | admin@campus.test | Password@123 |
+| Role | Email |
+| --- | --- |
+| Student | student@campus.test (also student2@, student3@) |
+| Club organizer | organizer@campus.test |
+| Faculty advisor | advisor@campus.test |
+| Resource admin | resources@campus.test |
+| Super admin | admin@campus.test |
+
+All of them use `DEMO_PASSWORD`. When you run locally without setting it, that is `Password@123`. The live site
+uses a different password, set on Render and shared only within the team. Changing `DEMO_PASSWORD` and restarting
+resets every demo account to the new password. If your local backend uses the same database as the live site, set
+the same `DEMO_PASSWORD` locally too, or it will reset the accounts back to `Password@123`.
 
 Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`.
 
