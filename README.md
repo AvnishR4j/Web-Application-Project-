@@ -168,6 +168,18 @@ Opening hours use the time zone in `BOOKING_ZONE` (default Asia/Kolkata). A pend
 
 Errors use one shape: `{"status": 409, "message": "...", "fields": {}}`.
 
+## Deploying
+
+The website runs on **Vercel**, the backend on **Render** (Vercel cannot run a long-running Java server), the data on **MongoDB Atlas**.
+
+1. **Backend (Render).** New > Blueprint > this repository. `render.yaml` builds `backend/Dockerfile`; enter your Atlas
+   `MONGODB_URI` when asked (`JWT_SECRET` is generated). Atlas Network Access must allow Render (`0.0.0.0/0`).
+   Check `https://<service>.onrender.com/api/health` returns `{"status":"ok"}`.
+2. **Website (Vercel).** Import this repository with root directory `frontend`. `frontend/vercel.json` forwards `/api/*`
+   to the Render service; change its URL there if your service has a different name.
+3. On Render's free tier the backend sleeps after 15 minutes without traffic, and the first request then takes about a
+   minute. Open the health URL a minute before a demo.
+
 ## Not built (parked in the plan)
 
 Paid tickets, single sign-on and student-system integration, a mobile app, recurring bookings, event
