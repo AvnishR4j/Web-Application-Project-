@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import EventHistory from './EventHistory'
 import EventRegistrations from './EventRegistrations'
@@ -97,6 +98,8 @@ export default function MyEvents() {
                   {['APPROVED', 'COMPLETED'].includes(ev.status) && (
                     <button className="link" onClick={() => setRegistrationsFor(registrationsFor === ev.id ? null : ev.id)}>Registrations</button>
                   )}
+                  {ev.status === 'APPROVED' && <Link to={`/events/${ev.id}/checkin`}>Check-in screen</Link>}
+                  {['APPROVED', 'COMPLETED'].includes(ev.status) && <Link to={`/events/${ev.id}/report`}>Report</Link>}
                 </div>
               </td>
             </tr>

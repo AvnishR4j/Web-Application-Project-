@@ -7,13 +7,13 @@ const ROLE_INFO = {
     title: 'Student',
     links: [['/events', 'Browse and register for upcoming events'], ['/registrations', 'My registrations and waitlist places'],
       ['/resources', 'See rooms, labs and equipment']],
-    later: ['Check in by QR code', 'Give feedback after an event'],
+    later: [],
   },
   [ROLES.CLUB_ORGANIZER]: {
     title: 'Club organizer',
     links: [['/my-events', 'Create and track event requests'], ['/book', 'Book a room, lab or equipment'],
       ['/bookings', 'My booking requests']],
-    later: ['Attendance and feedback reports'],
+    later: [],
   },
   [ROLES.FACULTY_ADVISOR]: {
     title: 'Faculty advisor',

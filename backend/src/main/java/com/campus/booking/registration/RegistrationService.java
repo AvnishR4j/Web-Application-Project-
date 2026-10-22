@@ -8,7 +8,9 @@ import com.campus.booking.model.Event;
 import com.campus.booking.model.EventStatus;
 import com.campus.booking.model.Registration;
 import com.campus.booking.model.RegistrationStatus;
+import com.campus.booking.repository.AttendanceRepository;
 import com.campus.booking.repository.EventRepository;
+import com.campus.booking.repository.FeedbackRepository;
 import com.campus.booking.repository.RegistrationRepository;
 import com.campus.booking.support.TransactionRetry;
 import java.time.Clock;
@@ -45,7 +47,8 @@ public class RegistrationService {
     }
 
     public record MyRegistration(Registration registration, String eventTitle, Instant start, Instant end,
-                                 EventStatus eventStatus, Integer waitlistPosition) {
+                                 EventStatus eventStatus, Integer waitlistPosition, boolean checkedIn,
+                                 boolean feedbackGiven) {
     }
 
     public record EventRegistrations(int capacity, List<Registration> confirmed, List<Registration> waitlist) {
@@ -53,14 +56,19 @@ public class RegistrationService {
 
     private final RegistrationRepository registrations;
     private final EventRepository events;
+    private final AttendanceRepository attendance;
+    private final FeedbackRepository feedback;
     private final MongoTemplate mongo;
     private final TransactionTemplate tx;
     private final Clock clock;
 
-    public RegistrationService(RegistrationRepository registrations, EventRepository events, MongoTemplate mongo,
+    public RegistrationService(RegistrationRepository registrations, EventRepository events,
+                               AttendanceRepository attendance, FeedbackRepository feedback, MongoTemplate mongo,
                                MongoTransactionManager txManager, Clock clock) {
         this.registrations = registrations;
         this.events = events;
+        this.attendance = attendance;
+        this.feedback = feedback;
         this.mongo = mongo;
         this.tx = new TransactionTemplate(txManager);
         this.clock = clock;
@@ -183,7 +191,9 @@ public class RegistrationService {
         for (Registration r : registrations.findByUserEmailOrderByCreatedAtDesc(who.email())) {
             events.findById(r.getEventId()).ifPresent(e -> out.add(new MyRegistration(r, e.getTitle(), e.getStart(),
                     e.getEnd(), e.getStatus(),
-                    r.getStatus() == RegistrationStatus.WAITLISTED ? waitlistPosition(r) : null)));
+                    r.getStatus() == RegistrationStatus.WAITLISTED ? waitlistPosition(r) : null,
+                    attendance.existsByEventIdAndUserEmail(r.getEventId(), who.email()),
+                    feedback.existsByEventIdAndUserEmail(r.getEventId(), who.email()))));
         }
         return out;
     }

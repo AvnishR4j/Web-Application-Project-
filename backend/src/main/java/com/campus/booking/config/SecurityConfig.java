@@ -68,6 +68,9 @@ public class SecurityConfig {
                     .hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/events/manager-queue").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/events/mine").hasAnyRole("CLUB_ORGANIZER", "SUPER_ADMIN")
+                // Check-in screen and report: students never; which club is checked in AttendanceController.
+                .requestMatchers(HttpMethod.GET, "/api/events/*/checkin-code", "/api/events/*/report")
+                    .hasAnyRole("CLUB_ORGANIZER", "FACULTY_ADVISOR", "RESOURCE_ADMIN", "SUPER_ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/events", "/api/events/*/submit", "/api/events/*/cancel",
                         "/api/events/*/complete").hasAnyRole("CLUB_ORGANIZER", "SUPER_ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/events/*").hasAnyRole("CLUB_ORGANIZER", "SUPER_ADMIN")

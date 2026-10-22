@@ -19,6 +19,11 @@ app:
   events:
     # Minimum notice for event requests, in days (plan default: 7).
     min-lead-days: ${EVENT_MIN_LEAD_DAYS:7}
+  checkin:
+    # Signs the rotating check-in codes (32+ characters). Defaults to the JWT secret.
+    secret: ${CHECKIN_SECRET:${app.jwt.secret}}
+    # Check-in opens this many minutes before an event starts and closes when it ends.
+    opens-minutes-before: ${CHECKIN_OPENS_MINUTES_BEFORE:30}
   seed-demo-data: ${SEED_DEMO_DATA:false}
 
 server:
