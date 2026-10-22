@@ -15,6 +15,9 @@ public class Booking {
     private String id;
     private String resourceId;
     private String requesterEmail;
+
+    /** Set when this booking holds the venue for an event; such bookings change only through the event. */
+    private String eventId;
     private String title;
     private Instant start;
     private Instant end;
@@ -41,6 +44,8 @@ public class Booking {
     public void setResourceId(String resourceId) { this.resourceId = resourceId; }
     public String getRequesterEmail() { return requesterEmail; }
     public void setRequesterEmail(String requesterEmail) { this.requesterEmail = requesterEmail; }
+    public String getEventId() { return eventId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public Instant getStart() { return start; }

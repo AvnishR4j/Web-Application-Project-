@@ -2,6 +2,7 @@ package com.campus.booking.exception;
 
 import com.campus.booking.booking.BookingConflictException;
 import java.util.Map;
+import org.springframework.dao.OptimisticLockingFailureException;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -73,6 +74,12 @@ public final class ApiExceptions {
             Map<String, String> fields = e.getViolations().stream()
                     .collect(Collectors.toMap(v -> v.code().name(), v -> v.message(), (a, b) -> a));
             return build(HttpStatus.CONFLICT, e.getMessage(), fields);
+        }
+
+        /** Two people changed the same record at once; the second one is asked to reload. */
+        @ExceptionHandler(OptimisticLockingFailureException.class)
+        ResponseEntity<ErrorBody> concurrentChange(OptimisticLockingFailureException e) {
+            return build(HttpStatus.CONFLICT, "Someone else changed this at the same time. Reload and try again.", Map.of());
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)

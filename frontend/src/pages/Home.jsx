@@ -1,51 +1,57 @@
 import { Link } from 'react-router-dom'
 import { ROLES, useAuth } from '../auth/AuthContext'
 
-// What each role will be able to do, mapped to the workflow plan. Entries become
-// real pages in later phases; they are listed here so the role split is visible now.
+// What each role can do today, with links to the pages that do it.
 const ROLE_INFO = {
   [ROLES.STUDENT]: {
     title: 'Student',
-    items: ['Browse approved events', 'Register, cancel, join a waitlist', 'Check in by QR code', 'Give feedback after an event'],
+    links: [['/events', 'Browse upcoming events'], ['/resources', 'See rooms, labs and equipment']],
+    later: ['Register for events and join waitlists', 'Check in by QR code', 'Give feedback after an event'],
   },
   [ROLES.CLUB_ORGANIZER]: {
     title: 'Club organizer',
-    items: ['Create event requests with venue and equipment', 'Track approval status and revise requests', 'See registrants and attendance'],
+    links: [['/my-events', 'Create and track event requests'], ['/book', 'Book a room, lab or equipment'],
+      ['/bookings', 'My booking requests']],
+    later: ['See registrants and attendance'],
+  },
+  [ROLES.FACULTY_ADVISOR]: {
+    title: 'Faculty advisor',
+    links: [['/advisor', 'Review event requests from your clubs'], ['/events', 'Upcoming events']],
+    later: [],
   },
   [ROLES.RESOURCE_ADMIN]: {
     title: 'Resource admin',
-    items: ['Manage rooms, labs and equipment', 'Approve or reject booking requests', 'View utilization reports'],
+    links: [['/event-approvals', 'Give final approval to events'], ['/approvals', 'Review booking requests'],
+      ['/resources', 'Manage rooms, labs and equipment']],
+    later: ['Utilization reports'],
   },
   [ROLES.SUPER_ADMIN]: {
     title: 'Super admin',
-    items: ['Manage users and roles', 'Set rules such as buffers and lead times', 'View the audit log'],
+    links: [['/admin/users', 'Manage users and roles'], ['/clubs', 'Manage clubs'],
+      ['/event-approvals', 'Event approvals']],
+    later: ['Audit log and reports'],
   },
 }
 
 export default function Home() {
   const { user } = useAuth()
-  const info = ROLE_INFO[user.role]
+  const info = ROLE_INFO[user.role] || { title: user.role, links: [], later: [] }
   return (
     <div className="card">
       <h1>Welcome, {user.name}</h1>
       <p className="muted">
         Signed in as <strong>{info.title}</strong> ({user.email})
       </p>
-      <h2>Your workspace (arrives in later phases)</h2>
       <ul>
-        {info.items.map((item) => (
-          <li key={item}>{item}</li>
+        {info.links.map(([to, label]) => (
+          <li key={to}><Link to={to}>{label}</Link></li>
         ))}
       </ul>
-      <p>
-        <Link to="/resources">Browse rooms, labs and equipment</Link>
-        {user.role !== ROLES.STUDENT && <> | <Link to="/book">Book a resource</Link></>}
-        {(user.role === ROLES.RESOURCE_ADMIN || user.role === ROLES.SUPER_ADMIN) && <> | <Link to="/approvals">Review requests</Link></>}
-      </p>
-      {user.role === ROLES.SUPER_ADMIN && (
-        <p>
-          <Link to="/admin/users">Manage users and roles</Link>
-        </p>
+      {info.later.length > 0 && (
+        <>
+          <h2>Coming in later phases</h2>
+          <ul className="muted">{info.later.map((item) => <li key={item}>{item}</li>)}</ul>
+        </>
       )}
     </div>
   )

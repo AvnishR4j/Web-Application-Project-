@@ -57,6 +57,20 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/bookings/*/approve", "/api/bookings/*/reject")
                     .hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/bookings").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                // Clubs: anyone logged in can read, only super admins manage them.
+                .requestMatchers(HttpMethod.POST, "/api/clubs").hasRole("SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/clubs/*").hasRole("SUPER_ADMIN")
+                // Events: the per-club checks (is this your club? are you its advisor?) live in EventService.
+                .requestMatchers(HttpMethod.POST, "/api/events/*/advisor-approve", "/api/events/*/advisor-reject")
+                    .hasAnyRole("FACULTY_ADVISOR", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/events/advisor-queue").hasAnyRole("FACULTY_ADVISOR", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/events/*/manager-approve", "/api/events/*/manager-reject")
+                    .hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/events/manager-queue").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/events/mine").hasAnyRole("CLUB_ORGANIZER", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/events", "/api/events/*/submit", "/api/events/*/cancel",
+                        "/api/events/*/complete").hasAnyRole("CLUB_ORGANIZER", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/events/*").hasAnyRole("CLUB_ORGANIZER", "SUPER_ADMIN")
                 .requestMatchers("/api/bookings/**").hasAnyRole("CLUB_ORGANIZER", "RESOURCE_ADMIN", "SUPER_ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

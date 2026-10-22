@@ -47,6 +47,7 @@ Run the backend tests with `cd backend && mvn test`.
 | --- | --- | --- |
 | Student | student@campus.test | Password@123 |
 | Club organizer | organizer@campus.test | Password@123 |
+| Faculty advisor | advisor@campus.test | Password@123 |
 | Resource admin | resources@campus.test | Password@123 |
 | Super admin | admin@campus.test | Password@123 |
 
@@ -58,7 +59,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | --- | --- | --- |
 | 1. Foundation | Repo, replica set, auth, four roles, role-protected pages, seed data | Done: `mvn test` passes (10 of 10) |
 | 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Done: 40 of 40 tests pass, including 20 parallel requests creating exactly one booking on MongoDB Atlas |
-| 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Not started |
+| 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Code written; needs `mvn test` with `MONGODB_URI` set |
 | 4. Registration | Capacity, waitlist, auto-promotion | Not started |
 | 5. Attendance and feedback | Rotating QR, check-in, feedback, notifications | Not started |
 | 6. Reports and polish | Utilization report, dashboard, docs, demo script | Not started |
@@ -72,10 +73,15 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
   repeated Idempotency-Key returns the same booking; cancelling frees the slot). `BookingConcurrencyTest` is skipped unless
   `MONGODB_URI` is set; point it at a throwaway database, because it creates and deletes its own data.
   Atlas note: the cluster's IP Access List must allow the machine running the tests.
+- Phase 3: the event state machine has 10 unit tests that pass. `EventAccessTest` (role rules) and `EventFlowTest`
+  (Draft to Approved reserves the room; 7-day notice; two events cannot hold one room; rejecting, cancelling or
+  editing frees the room; only the club's own advisor can approve) were written without being compiled here, so run
+  `mvn test` with `MONGODB_URI` set.
 - Frontend: `npm run build` passes.
 
 ## Roles
 
+Five roles: student, club organizer, faculty advisor, resource admin, super admin.
 Self-registration always creates a `STUDENT`. A `SUPER_ADMIN` creates organizer and admin accounts or changes roles
 (Users page, or `POST /api/admin/users`, `PATCH /api/admin/users/{id}/role`). Role rules are enforced on the server;
 the UI only hides pages.
@@ -102,6 +108,17 @@ the UI only hides pages.
 | GET /api/bookings?status= | Resource admin, super admin | All requests |
 | PATCH /api/bookings/{id}/approve, /reject | Resource admin, super admin | Decide a pending request (reject needs a reason) |
 | PATCH /api/bookings/{id}/cancel | Owner, or resource admin | Cancel before the start time; under 72 hours is flagged as a late cancellation |
+
+| GET /api/clubs, GET /api/clubs/mine | Logged in | Clubs (all, or the ones you organize or advise) |
+| POST /api/clubs, PUT /api/clubs/{id} | Super admin | Create or edit a club: one faculty advisor, any number of organizers |
+| GET /api/events | Logged in | Approved upcoming events (all a student sees) |
+| GET /api/events/mine | Organizer | Events of your clubs, any status |
+| POST /api/events, PUT /api/events/{id} | Organizer of that club | Draft or edit an event. Editing after submission sends it back to draft and frees the room |
+| POST /api/events/{id}/submit | Organizer of that club | At least 7 days ahead (`EVENT_MIN_LEAD_DAYS`); reserves the venue through the conflict engine |
+| POST /api/events/{id}/advisor-approve, /advisor-reject | That club's faculty advisor | First approval step (reject needs a reason) |
+| POST /api/events/{id}/manager-approve, /manager-reject | Resource admin, super admin | Final step; approving confirms the room booking and publishes the event |
+| POST /api/events/{id}/cancel, /complete | Organizer of that club, super admin | Cancel frees the room; complete only after the event ends |
+| GET /api/events/{id}/history | Club organizers, advisor, admins | Audit log: who did what, when, and why |
 
 A booking that breaks rules returns HTTP 409 with one entry per rule in `fields`
 (`OVERLAP`, `BUFFER`, `CAPACITY`, `BLOCKED`, `ACCESS`, `OUTSIDE_HOURS`, `RESOURCE_INACTIVE`, `INVALID_TIME`).

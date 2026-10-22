@@ -4,6 +4,7 @@ import { api, tokenStore } from '../api/client'
 export const ROLES = {
   STUDENT: 'STUDENT',
   CLUB_ORGANIZER: 'CLUB_ORGANIZER',
+  FACULTY_ADVISOR: 'FACULTY_ADVISOR',
   RESOURCE_ADMIN: 'RESOURCE_ADMIN',
   SUPER_ADMIN: 'SUPER_ADMIN',
 }

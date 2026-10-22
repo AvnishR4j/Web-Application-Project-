@@ -13,7 +13,8 @@ export default function ApprovalQueue() {
   const load = useCallback(() => {
     Promise.all([api('/api/bookings?status=PENDING'), api('/api/resources?includeInactive=true')])
       .then(([bookings, resources]) => {
-        setItems(bookings)
+        // Event venue bookings are approved through Event approvals, not here.
+        setItems(bookings.filter((b) => !b.eventId))
         setNames(Object.fromEntries(resources.map((r) => [r.id, r.name])))
       })
       .catch((e) => setError(e.message))

@@ -82,6 +82,11 @@ public class BookingService {
      * original booking instead of creating a second one.
      */
     public Booking create(BookingInput in, String clientKey, Requester who) {
+        return create(in, clientKey, who, null);
+    }
+
+    /** Same as {@link #create(BookingInput, String, Requester)}, linking the booking to an event when eventId is set. */
+    public Booking create(BookingInput in, String clientKey, Requester who, String eventId) {
         String key = who.email() + ":" + clientKey;
         for (int attempt = 1; ; attempt++) {
             Optional<Booking> prior = bookings.findByIdempotencyKey(key);
@@ -95,7 +100,7 @@ public class BookingService {
                 if (!early.isEmpty()) {
                     throw new BookingConflictException(early);
                 }
-                return tx.execute(status -> createInTransaction(in, key, who));
+                return tx.execute(status -> createInTransaction(in, key, who, eventId));
             } catch (DuplicateKeyException duplicate) {
                 Optional<Booking> winner = bookings.findByIdempotencyKey(key);
                 if (winner.isPresent()) {
@@ -121,7 +126,7 @@ public class BookingService {
         }
     }
 
-    private Booking createInTransaction(BookingInput in, String key, Requester who) {
+    private Booking createInTransaction(BookingInput in, String key, Requester who, String eventId) {
         Resource resource = requireResource(in.resourceId());
 
         // Serialise bookings per resource: a second transaction touching this document fails with a write conflict.
@@ -142,10 +147,12 @@ public class BookingService {
         booking.setAttendees(in.attendees());
         booking.setStatus(BookingStatus.PENDING);
         booking.setIdempotencyKey(key);
+        booking.setEventId(eventId);
         return bookings.insert(booking);
     }
 
     public Booking approve(String bookingId, String adminEmail) {
+        requireNotEventBooking(requireBooking(bookingId));
         return decide(bookingId, adminEmail, BookingStatus.APPROVED, null);
     }
 
@@ -153,7 +160,35 @@ public class BookingService {
         if (reason == null || reason.isBlank()) {
             throw new BadRequestException("A reason is required when rejecting a booking");
         }
+        requireNotEventBooking(requireBooking(bookingId));
         return decide(bookingId, adminEmail, BookingStatus.REJECTED, reason.trim());
+    }
+
+    /** Used by the event workflow once the space manager approves the event. */
+    public Booking approveForEvent(String bookingId, String actorEmail) {
+        return decide(bookingId, actorEmail, BookingStatus.APPROVED, null);
+    }
+
+    /**
+     * Used by the event workflow to free the venue when an event is rejected, cancelled or edited.
+     * Does nothing if the booking no longer holds the slot.
+     */
+    public void releaseForEvent(String bookingId, String actorEmail, BookingStatus target, String reason) {
+        if (bookingId == null) {
+            return;
+        }
+        mongo.updateFirst(
+                Query.query(Criteria.where("id").is(bookingId)
+                        .and("status").in(BookingStatus.PENDING, BookingStatus.APPROVED)),
+                new Update().set("status", target).set("decidedBy", actorEmail)
+                        .set("decidedAt", Instant.now(clock)).set("decisionReason", reason),
+                Booking.class);
+    }
+
+    private static void requireNotEventBooking(Booking booking) {
+        if (booking.getEventId() != null) {
+            throw new ConflictException("This booking belongs to an event. Approve, reject or cancel the event instead.");
+        }
     }
 
     private Booking decide(String bookingId, String adminEmail, BookingStatus target, String reason) {
@@ -172,6 +207,7 @@ public class BookingService {
 
     public Booking cancel(String bookingId, Requester who) {
         Booking booking = requireBooking(bookingId);
+        requireNotEventBooking(booking);
         if (!who.isResourceManager() && !booking.getRequesterEmail().equals(who.email())) {
             throw new ForbiddenException("You can only cancel your own bookings");
         }
