@@ -43,26 +43,26 @@ function navFor(role, counts) {
   const has = (list) => list.includes(role)
   const groups = [
     { name: 'Campus', links: [
-      { to: '/', icon: 'home', label: 'Today', end: true },
-      { to: '/events', icon: 'calendar', label: 'Events' },
-      { to: '/registrations', icon: 'ticket', label: 'My tickets' },
-      { to: '/resources', icon: 'door', label: 'Rooms and equipment' },
+      { to: '/', icon: 'clock', label: 'Today', short: 'Today', end: true },
+      { to: '/events', icon: 'calendar', label: 'Events', short: 'Events' },
+      { to: '/registrations', icon: 'ticket', label: 'My tickets', short: 'Tickets' },
+      { to: '/resources', icon: 'door', label: 'Rooms and equipment', short: 'Rooms' },
     ] },
     { name: 'Organize', links: [
-      has(ORGANIZERS) && { to: '/my-events', icon: 'clipboard', label: 'My events' },
-      has(BOOKERS) && { to: '/book', icon: 'plus', label: 'Book a room' },
-      has(BOOKERS) && { to: '/bookings', icon: 'list', label: 'My bookings' },
+      has(ORGANIZERS) && { to: '/my-events', icon: 'clipboard', label: 'My events', short: 'My events' },
+      has(BOOKERS) && { to: '/book', icon: 'plus', label: 'Book a room', short: 'Book' },
+      has(BOOKERS) && { to: '/bookings', icon: 'list', label: 'My bookings', short: 'Bookings' },
     ] },
     { name: 'Review', links: [
-      has(ADVISORS) && { to: '/advisor', icon: 'check', label: 'Advisor review', count: counts.advisor },
-      has(MANAGERS) && { to: '/event-approvals', icon: 'stamp', label: 'Event approvals', count: counts.events },
-      has(MANAGERS) && { to: '/approvals', icon: 'stamp', label: 'Booking approvals', count: counts.bookings },
+      has(ADVISORS) && { to: '/advisor', icon: 'check', label: 'Advisor review', short: 'Review', count: counts.advisor },
+      has(MANAGERS) && { to: '/event-approvals', icon: 'stamp', label: 'Event approvals', short: 'Approve events', count: counts.events },
+      has(MANAGERS) && { to: '/approvals', icon: 'door', label: 'Booking approvals', short: 'Approve rooms', count: counts.bookings },
     ] },
     { name: 'Manage', links: [
-      has(MANAGERS) && { to: '/reports', icon: 'chart', label: 'Reports' },
-      role === ROLES.SUPER_ADMIN && { to: '/clubs', icon: 'club', label: 'Clubs' },
-      role === ROLES.SUPER_ADMIN && { to: '/admin/users', icon: 'users', label: 'People and roles' },
-      role === ROLES.SUPER_ADMIN && { to: '/admin/audit', icon: 'history', label: 'Audit log' },
+      has(MANAGERS) && { to: '/reports', icon: 'chart', label: 'Reports', short: 'Reports' },
+      role === ROLES.SUPER_ADMIN && { to: '/clubs', icon: 'club', label: 'Clubs', short: 'Clubs' },
+      role === ROLES.SUPER_ADMIN && { to: '/admin/users', icon: 'users', label: 'People and roles', short: 'People' },
+      role === ROLES.SUPER_ADMIN && { to: '/admin/audit', icon: 'history', label: 'Audit log', short: 'Audit' },
     ] },
   ]
   return groups.map((g) => ({ ...g, links: g.links.filter(Boolean) })).filter((g) => g.links.length)
@@ -97,39 +97,41 @@ function Shell({ children }) {
   if (!user) return <div className="app signed-out">{children}</div>
 
   const themeButton = (
-    <button className="ghost icon" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to whiteboard (light) theme' : 'Switch to chalkboard (dark) theme'}>
+    <button className="ghost icon" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to Day theme' : 'Switch to Night theme'}>
       <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-      <span>{theme === 'dark' ? 'Whiteboard' : 'Chalkboard'}</span>
+      <span>{theme === 'dark' ? 'Day' : 'Night'}</span>
     </button>
   )
 
   return (
     <div className="app">
       <header className="topbar">
-        <Link to="/" className="brand"><BrandMark />Campus Board</Link>
+        <Link to="/" className="brand"><BrandMark /><span className="brand-name">Campus Board</span></Link>
         <button className="ghost icon" onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open}>
           <Icon name="menu" /> Menu
         </button>
       </header>
       {open && <div className="scrim" onClick={() => setOpen(false)} />}
       <nav className={`rail${open ? ' open' : ''}`} aria-label="Main">
-        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
-          <Link to="/" className="brand"><BrandMark />Campus Board</Link>
+        <div className="brand-row">
+          <Link to="/" className="brand" aria-label="Campus Board, today"><BrandMark /><span className="brand-name">Campus Board</span></Link>
           {open && <button className="ghost" onClick={() => setOpen(false)} aria-label="Close menu"><Icon name="close" width="18" /></button>}
         </div>
         {navFor(user.role, counts).map((g) => (
           <div key={g.name}>
-            <div className="rail-group">{g.name}</div>
+            {g.name !== 'Campus' && <div className="rail-group" role="separator"><span>{g.name}</span></div>}
             {g.links.map((l) => (
-              <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => `rail-link${isActive ? ' active' : ''}`}>
+              <NavLink key={l.to} to={l.to} end={l.end} title={l.label} aria-label={l.label} className={({ isActive }) => `rail-link${isActive ? ' active' : ''}`}>
                 <Icon name={l.icon} />
-                <span>{l.label}</span>
+                <span className="rail-short">{l.short}</span>
+                <span className="rail-full">{l.label}</span>
                 {l.count > 0 && <span className="rail-count" aria-label={`${l.count} waiting`}>{l.count}</span>}
               </NavLink>
             ))}
           </div>
         ))}
         <div className="rail-foot">
+          <span className="avatar" title={`${user.name}, ${ROLE_NAME[user.role] || user.role}`}>{user.name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</span>
           <div className="who">
             <strong>{user.name}</strong>
             <span>{ROLE_NAME[user.role] || user.role}</span>
@@ -137,7 +139,7 @@ function Shell({ children }) {
           <div className="rail-actions">
             {themeButton}
             <button className="ghost icon" onClick={() => { logout(); navigate('/login') }}>
-              <Icon name="logout" /> Log out
+              <Icon name="logout" /><span>Log out</span>
             </button>
           </div>
         </div>

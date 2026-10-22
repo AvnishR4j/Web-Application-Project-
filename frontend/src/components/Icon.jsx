@@ -34,13 +34,15 @@ export default function Icon({ name, title, ...rest }) {
   )
 }
 
-/** The Campus Board mark: two chalk strokes on a board, like bookings on a timeline. */
+/** The Campus Board mark: a dial with its hand. */
 export function BrandMark() {
   return (
-    <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#1b2e28" />
-      <path d="M8 12.5h9" stroke="#eceee4" strokeWidth="3" strokeLinecap="round" />
-      <path d="M8 20h16" stroke="#f1d265" strokeWidth="3" strokeLinecap="round" />
+    <svg className="brand-mark" viewBox="0 0 34 34" aria-hidden="true">
+      <circle cx="17" cy="17" r="13" fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.4" />
+      <path d="M17 4a13 13 0 0 1 12.4 9" fill="none" stroke="#e3d3b0" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M23.5 26.2A13 13 0 0 1 9.5 27.6" fill="none" stroke="#a9c2a6" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M17 17l5-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      <circle cx="17" cy="17" r="2" fill="currentColor" />
     </svg>
   )
 }
