@@ -8,6 +8,7 @@ export default function MyBookings() {
   const [names, setNames] = useState({})
   const [error, setError] = useState('')
   const [note, setNote] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(() => {
     Promise.all([api('/api/bookings/mine'), api('/api/resources?includeInactive=true')])
@@ -16,6 +17,7 @@ export default function MyBookings() {
         setNames(Object.fromEntries(resources.map((r) => [r.id, r.name])))
       })
       .catch((e) => setError(e.message))
+      .finally(() => setLoaded(true))
   }, [])
 
   useEffect(load, [load])
@@ -39,7 +41,7 @@ export default function MyBookings() {
       <h1>My booking requests</h1>
       {error && <p className="error" role="alert">{error}</p>}
       {note && <p className="notice" role="status">{note}</p>}
-      {items.length === 0 ? <p className="muted">No requests yet.</p> : (
+      {!loaded ? <p className="muted">Loading...</p> : items.length === 0 ? <p className="muted">No requests yet.</p> : (
         <table>
           <thead>
             <tr><th>Resource</th><th>Purpose</th><th>From</th><th>To</th><th>Status</th><th /></tr>
