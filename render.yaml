@@ -1,0 +1,20 @@
+# One-click backend on Render: New > Blueprint > pick this repository.
+# You will be asked for MONGODB_URI (your Atlas connection string). JWT_SECRET is generated for you.
+services:
+  - type: web
+    name: campus-board-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_DEMO_DATA
+        value: "true"
+      - key: BOOKING_ZONE
+        value: Asia/Kolkata
