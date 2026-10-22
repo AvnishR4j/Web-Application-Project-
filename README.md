@@ -61,7 +61,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Done: 40 of 40 tests pass, including 20 parallel requests creating exactly one booking on MongoDB Atlas |
 | 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Done: 64 of 64 tests pass on MongoDB Atlas; an event goes Draft to Approved and reserves its room |
 | 4. Registration | Capacity, waitlist, auto-promotion | Done: 76 of 76 tests pass on MongoDB Atlas; 30 parallel registrations fill exactly 10 seats |
-| 5. Attendance and feedback | Rotating QR, check-in, feedback, report | Code written; needs `mvn test` with `MONGODB_URI` set |
+| 5. Attendance and feedback | Rotating QR, check-in, feedback, report | Done: 101 of 101 tests pass on MongoDB Atlas; a full event runs end to end |
 | 6. Reports and polish | Utilization report, dashboard, docs, demo script | Not started |
 
 ### Verification status
@@ -79,9 +79,9 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 - Phase 4: `mvn test` passes 76 of 76 against MongoDB Atlas, including `RegistrationFlowTest` (9): 30 parallel
   registrations fill exactly 10 seats and waitlist 20; cancelling a seat promotes the first waitlisted student; a cancel
   racing a new registration never overfills; waitlist positions stay in order.
-- Phase 5: `RotatingCodeTest` (13) passes. `AttendanceFlowTest` (a full event runs end to end: check-in, feedback, report;
-  old or wrong codes rejected; only confirmed registrants check in; check-in open only around the event; feedback only from
-  attendees, once) and `AttendanceAccessTest` were written without being compiled here, so run `mvn test` with `MONGODB_URI` set.
+- Phase 5: `mvn test` passes 101 of 101 against MongoDB Atlas, including `RotatingCodeTest` (13), `AttendanceFlowTest` (6:
+  a full event runs end to end with check-in, feedback and report; old or wrong codes rejected; only confirmed registrants;
+  check-in only around the event; feedback only from attendees, once) and `AttendanceAccessTest` (6).
 - Frontend: `npm run build` passes.
 
 ## Roles
