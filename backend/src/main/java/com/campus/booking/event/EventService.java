@@ -16,6 +16,7 @@ import com.campus.booking.model.Club;
 import com.campus.booking.model.Event;
 import com.campus.booking.model.EventStatus;
 import com.campus.booking.model.Role;
+import com.campus.booking.registration.RegistrationService;
 import com.campus.booking.repository.AuditLogRepository;
 import com.campus.booking.repository.ClubRepository;
 import com.campus.booking.repository.EventRepository;
@@ -40,17 +41,19 @@ public class EventService {
     private final ResourceRepository resources;
     private final AuditLogRepository audit;
     private final BookingService bookings;
+    private final RegistrationService registrations;
     private final Clock clock;
     private final int minLeadDays;
 
     public EventService(EventRepository events, ClubRepository clubs, ResourceRepository resources,
-                        AuditLogRepository audit, BookingService bookings, Clock clock,
-                        @Value("${app.events.min-lead-days}") int minLeadDays) {
+                        AuditLogRepository audit, BookingService bookings, RegistrationService registrations,
+                        Clock clock, @Value("${app.events.min-lead-days}") int minLeadDays) {
         this.events = events;
         this.clubs = clubs;
         this.resources = resources;
         this.audit = audit;
         this.bookings = bookings;
+        this.registrations = registrations;
         this.clock = clock;
         this.minLeadDays = minLeadDays;
     }
@@ -187,7 +190,9 @@ public class EventService {
         e.setManagerDecisionAt(Instant.now(clock));
         Event saved = save(e);
         log(saved, "APPROVED", from, to, who, null);
-        return saved;
+        // If the event was edited to allow more people, waitlisted students move up now.
+        registrations.fillFromWaitlist(saved.getId());
+        return events.findById(saved.getId()).orElse(saved);
     }
 
     public Event managerReject(String id, String reason, Requester who) {
@@ -255,6 +260,13 @@ public class EventService {
             throw new ForbiddenException("Only the club's organizers, its advisor and admins can see the history");
         }
         return audit.findByEventIdOrderByAtAsc(id);
+    }
+
+    /** Throws unless the caller is one of the event's club organizers, its advisor, or an admin. */
+    public void requireInsider(String eventId, Requester who) {
+        if (!canSeeInternals(requireEvent(eventId), who)) {
+            throw new ForbiddenException("Only the club's organizers, its advisor and admins can see this");
+        }
     }
 
     private boolean canSeeInternals(Event e, Requester who) {

@@ -45,7 +45,7 @@ Run the backend tests with `cd backend && mvn test`.
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Student | student@campus.test | Password@123 |
+| Student | student@campus.test (also student2@, student3@) | Password@123 |
 | Club organizer | organizer@campus.test | Password@123 |
 | Faculty advisor | advisor@campus.test | Password@123 |
 | Resource admin | resources@campus.test | Password@123 |
@@ -60,7 +60,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | 1. Foundation | Repo, replica set, auth, four roles, role-protected pages, seed data | Done: `mvn test` passes (10 of 10) |
 | 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Done: 40 of 40 tests pass, including 20 parallel requests creating exactly one booking on MongoDB Atlas |
 | 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Done: 64 of 64 tests pass on MongoDB Atlas; an event goes Draft to Approved and reserves its room |
-| 4. Registration | Capacity, waitlist, auto-promotion | Not started |
+| 4. Registration | Capacity, waitlist, auto-promotion | Code written; needs `mvn test` with `MONGODB_URI` set |
 | 5. Attendance and feedback | Rotating QR, check-in, feedback, notifications | Not started |
 | 6. Reports and polish | Utilization report, dashboard, docs, demo script | Not started |
 
@@ -76,6 +76,9 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 - Phase 3: `mvn test` passes 64 of 64 against MongoDB Atlas, including `EventStateMachineTest` (10), `EventAccessTest` (6)
   and `EventFlowTest` (8): Draft to Approved reserves the room; 7-day notice enforced; two events cannot hold one room;
   rejecting, cancelling or editing frees the room; only the club's own advisor can approve; the manager cannot skip the advisor.
+- Phase 4: `RegistrationFlowTest` (30 parallel registrations fill exactly 10 seats; cancelling a seat promotes the first
+  waitlisted student; a cancel racing a new registration never overfills) and `RegistrationAccessTest` were written without
+  being compiled here, so run `mvn test` with `MONGODB_URI` set.
 - Frontend: `npm run build` passes.
 
 ## Roles
@@ -117,6 +120,10 @@ the UI only hides pages.
 | POST /api/events/{id}/advisor-approve, /advisor-reject | That club's faculty advisor | First approval step (reject needs a reason) |
 | POST /api/events/{id}/manager-approve, /manager-reject | Resource admin, super admin | Final step; approving confirms the room booking and publishes the event |
 | POST /api/events/{id}/cancel, /complete | Organizer of that club, super admin | Cancel frees the room; complete only after the event ends |
+| GET /api/events/seats | Logged in | Seats left, waitlist length, and your own place for every published event |
+| POST /api/events/{id}/register, /unregister | Logged in | Register (or join the waitlist when full); cancel. Cancelling a seat promotes the first waitlisted student |
+| GET /api/registrations/mine | Logged in | Your registrations with waitlist position |
+| GET /api/events/{id}/registrations | Club organizers, advisor, admins | Registered list and waitlist in order |
 | GET /api/events/{id}/history | Club organizers, advisor, admins | Audit log: who did what, when, and why |
 
 A booking that breaks rules returns HTTP 409 with one entry per rule in `fields`

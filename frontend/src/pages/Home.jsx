@@ -5,14 +5,15 @@ import { ROLES, useAuth } from '../auth/AuthContext'
 const ROLE_INFO = {
   [ROLES.STUDENT]: {
     title: 'Student',
-    links: [['/events', 'Browse upcoming events'], ['/resources', 'See rooms, labs and equipment']],
-    later: ['Register for events and join waitlists', 'Check in by QR code', 'Give feedback after an event'],
+    links: [['/events', 'Browse and register for upcoming events'], ['/registrations', 'My registrations and waitlist places'],
+      ['/resources', 'See rooms, labs and equipment']],
+    later: ['Check in by QR code', 'Give feedback after an event'],
   },
   [ROLES.CLUB_ORGANIZER]: {
     title: 'Club organizer',
     links: [['/my-events', 'Create and track event requests'], ['/book', 'Book a room, lab or equipment'],
       ['/bookings', 'My booking requests']],
-    later: ['See registrants and attendance'],
+    later: ['Attendance and feedback reports'],
   },
   [ROLES.FACULTY_ADVISOR]: {
     title: 'Faculty advisor',
