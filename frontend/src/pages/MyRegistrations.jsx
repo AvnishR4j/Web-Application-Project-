@@ -1,30 +1,33 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import { STATUS_LABEL, describeError, fmt } from './eventUtils'
-
-const REG_LABEL = { CONFIRMED: 'Registered', WAITLISTED: 'Waitlisted', CANCELLED: 'Cancelled' }
-const REG_BADGE = { CONFIRMED: 'APPROVED', WAITLISTED: 'PENDING', CANCELLED: 'CANCELLED' }
+import Ticket from '../components/Ticket'
+import { STATUS_LABEL, describeError } from './eventUtils'
 
 const CHECKIN_OPENS_MS = 30 * 60 * 1000
 
 function FeedbackForm({ eventId, onDone }) {
-  const [rating, setRating] = useState(5)
+  const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   async function send(e) {
     e.preventDefault()
     setError('')
-    try { await api(`/api/events/${eventId}/feedback`, { method: 'POST', body: { rating: Number(rating), comment } }); onDone() }
+    try { await api(`/api/events/${eventId}/feedback`, { method: 'POST', body: { rating, comment } }); onDone() }
     catch (err) { setError(describeError(err)) }
   }
   return (
-    <form className="row" onSubmit={send}>
-      <select value={rating} onChange={(e) => setRating(e.target.value)} aria-label="Rating">
-        {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
-      </select>
+    <form onSubmit={send} className="stack" style={{ gap: 8, marginBottom: 0 }}>
+      <span className="stub-status NONE">How was it?</span>
+      <div className="row" role="radiogroup" aria-label="Rating out of 5" style={{ gap: 4 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} out of 5`}
+            className={rating >= n ? '' : 'secondary'} style={{ minHeight: 36, padding: '4px 0', width: 34 }}
+            onClick={() => setRating(n)}>{n}</button>
+        ))}
+      </div>
       <input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={1000} />
-      <button>Send feedback</button>
+      <button disabled={rating === 0}>Send feedback</button>
       {error && <span className="error">{error}</span>}
     </form>
   )
@@ -48,56 +51,74 @@ export default function MyRegistrations() {
     catch (err) { setError(describeError(err)) }
   }
 
+  const now = Date.now()
+  const upcoming = items.filter((x) => new Date(x.end).getTime() > now && x.registration.status !== 'CANCELLED')
+  const past = items.filter((x) => !upcoming.includes(x))
+
+  function stub({ registration: r, start, end, eventStatus, waitlistPosition, checkedIn, feedbackGiven }) {
+    const s = new Date(start).getTime()
+    const e = new Date(end).getTime()
+    const started = now >= s
+    if (eventStatus !== 'APPROVED' && eventStatus !== 'COMPLETED') {
+      return <span className="stub-status NONE">Event {STATUS_LABEL[eventStatus]?.toLowerCase()}</span>
+    }
+    if (r.status === 'CANCELLED') return <span className="stub-status NONE">You cancelled</span>
+    if (checkedIn) {
+      if (started && !feedbackGiven) return <FeedbackForm eventId={r.eventId} onDone={load} />
+      return (<>
+        <span className="stub-status CHECKED_IN">Checked in</span>
+        {feedbackGiven && <span className="muted" style={{ fontSize: '0.85rem' }}>Thanks for your feedback.</span>}
+      </>)
+    }
+    if (r.status === 'WAITLISTED') {
+      return (<>
+        <span className="stub-status WAITLISTED">Waitlist #{waitlistPosition}</span>
+        {!started && <button className="secondary" onClick={() => cancel(r.eventId)}>Leave waitlist</button>}
+      </>)
+    }
+    const checkinOpen = now >= s - CHECKIN_OPENS_MS && now <= e
+    return (<>
+      <span className="stub-status CONFIRMED">{r.promoted ? 'In, from the waitlist' : 'You are in'}</span>
+      {checkinOpen && <Link to={`/checkin/${r.eventId}`}><button>Check in</button></Link>}
+      {!checkinOpen && !started && <span className="muted" style={{ fontSize: '0.85rem' }}>Check-in opens 30 minutes before the start.</span>}
+      {!started && <button className="secondary" onClick={() => cancel(r.eventId)}>Cancel my place</button>}
+      {now > e && <span className="muted" style={{ fontSize: '0.85rem' }}>Not checked in.</span>}
+    </>)
+  }
+
+  const ticket = (x) => (
+    <Ticket key={x.registration.id} start={x.start} end={x.end} title={x.eventTitle} stub={stub(x)} />
+  )
+
   return (
     <div className="card">
-      <h1>My registrations</h1>
-      {error && <p className="error" role="alert">{error}</p>}
+      <div className="page-head">
+        <div>
+          <h1>My tickets</h1>
+          <p>Your places at events. Check in from here when the event starts.</p>
+        </div>
+        <Link to="/events"><button className="secondary">Find events</button></Link>
+      </div>
+      {error && <p className="notice bad" role="alert" style={{ marginBottom: 16 }}>{error}</p>}
       {standing && standing.limit > 0 && standing.noShows > 0 && (
-        <p className={`notice ${standing.blocked ? 'bad' : ''}`} role="status">
+        <p className={`notice ${standing.blocked ? 'bad' : ''}`} role="status" style={{ marginBottom: 16 }}>
           {standing.blocked
             ? `You missed ${standing.noShows} events you registered for in the last ${standing.windowDays} days, so new registrations are paused for now.`
             : `You missed ${standing.noShows} event${standing.noShows > 1 ? 's' : ''} you registered for in the last ${standing.windowDays} days. At ${standing.limit}, new registrations are paused. Cancel ahead if you cannot come.`}
         </p>
       )}
-      {!loaded ? <p className="muted">Loading...</p> : items.length === 0 ? <p className="muted">You have not registered for any events yet.</p> : (
-        <table>
-          <thead><tr><th>Event</th><th>When</th><th>My place</th><th /></tr></thead>
-          <tbody>
-            {items.map(({ registration: r, eventTitle, start, end, eventStatus, waitlistPosition, checkedIn, feedbackGiven }) => {
-              const now = Date.now()
-              const checkinOpen = r.status === 'CONFIRMED' && eventStatus === 'APPROVED' && !checkedIn
-                && now >= new Date(start).getTime() - CHECKIN_OPENS_MS && now <= new Date(end).getTime()
-              const started = now >= new Date(start).getTime()
-              return (
-              <tr key={r.id}>
-                <td>{eventTitle}
-                  {eventStatus !== 'APPROVED' && <div className="muted">Event is {STATUS_LABEL[eventStatus]?.toLowerCase()}</div>}
-                </td>
-                <td>{fmt(start)}</td>
-                <td>
-                  <span className={`badge ${REG_BADGE[r.status]}`}>
-                    {REG_LABEL[r.status]}{r.status === 'WAITLISTED' && ` #${waitlistPosition}`}
-                  </span>
-                  {r.promoted && r.status === 'CONFIRMED' && <div className="muted">Moved up from the waitlist</div>}
-                  {checkedIn && <div className="muted">Checked in</div>}
-                </td>
-                <td>
-                  <div className="stack" style={{ marginBottom: 0 }}>
-                    {checkinOpen && <Link to={`/checkin/${r.eventId}`}><button>Check in</button></Link>}
-                    {checkedIn && started && !feedbackGiven && <FeedbackForm eventId={r.eventId} onDone={load} />}
-                    {feedbackGiven && <span className="muted">Thanks for your feedback</span>}
-                    {r.status !== 'CANCELLED' && eventStatus === 'APPROVED' && !started && (
-                      <button className="secondary" onClick={() => cancel(r.eventId)}>
-                        {r.status === 'CONFIRMED' ? 'Cancel' : 'Leave waitlist'}
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-              )
-            })}
-          </tbody>
-        </table>
+      {!loaded ? (
+        <div className="panel"><div className="skeleton" /></div>
+      ) : items.length === 0 ? (
+        <div className="empty"><p>You have no tickets yet.</p><Link to="/events"><button>Browse events</button></Link></div>
+      ) : (
+        <>
+          <div className="tickets">{upcoming.length ? upcoming.map(ticket) : <div className="empty"><p>Nothing coming up.</p></div>}</div>
+          {past.length > 0 && (<>
+            <h2>Past and cancelled</h2>
+            <div className="tickets">{past.map(ticket)}</div>
+          </>)}
+        </>
       )}
     </div>
   )

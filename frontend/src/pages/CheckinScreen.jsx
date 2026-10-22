@@ -36,19 +36,32 @@ export default function CheckinScreen() {
   }, [data])
 
   return (
-    <div className="card" style={{ textAlign: 'center' }}>
-      <h1>Scan to check in</h1>
-      {error && <p className="error" role="alert">{error}</p>}
+    <div className="card">
+      <div className="page-head">
+        <div>
+          <h1>Check-in</h1>
+          <p>Put this screen where people come in. The code changes every 30 seconds, so a photo of it stops working.</p>
+        </div>
+        <Link to="/my-events"><button className="secondary">Back to My events</button></Link>
+      </div>
+      {error && <p className="notice bad" role="alert">{error}</p>}
       {data && (
-        <>
-          {qr && <img src={qr} alt={`Check-in QR code ${data.code}`} width="320" height="320" style={{ background: '#fff', padding: 8, borderRadius: 8 }} />}
-          <p className="muted">Or open <strong>Check in</strong> on My registrations and type:</p>
-          <p style={{ fontSize: '2.6rem', letterSpacing: '0.3em', fontFamily: 'ui-monospace, monospace', margin: '4px 0' }}>{data.code}</p>
-          <p className="muted">New code in {secondsLeft}s</p>
-          <p style={{ fontSize: '1.4rem' }}><strong>{data.checkedIn}</strong> of {data.registered} registered have checked in</p>
-        </>
+        <div className="panel checkin-screen">
+          {qr && <img src={qr} alt={`QR code to check in, code ${data.code}`} width="300" height="300" style={{ background: '#fff', padding: 10, borderRadius: 12 }} />}
+          <div>
+            <p className="muted" style={{ margin: '0 0 6px' }}>Scan the code, or open My tickets and type</p>
+            <div className="checkin-code num" aria-live="polite">{data.code}</div>
+            <p className="muted" style={{ margin: '10px 0 22px' }}>New code in {secondsLeft} s</p>
+            <div className="row" style={{ alignItems: 'baseline', gap: 8 }}>
+              <span className="num" style={{ fontSize: '2.6rem', fontWeight: 800, fontStretch: '120%' }}>{data.checkedIn}</span>
+              <span style={{ fontSize: '1.1rem' }}>of {data.registered} registered have checked in</span>
+            </div>
+            <span className="seatbar" style={{ display: 'block', maxWidth: 360, height: 10, marginTop: 8 }} aria-hidden="true">
+              <i style={{ width: `${data.registered ? (data.checkedIn / data.registered) * 100 : 0}%` }} />
+            </span>
+          </div>
+        </div>
       )}
-      <p><Link to="/my-events">Back to My events</Link></p>
     </div>
   )
 }
