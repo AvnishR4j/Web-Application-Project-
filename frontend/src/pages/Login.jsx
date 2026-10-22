@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,7 +17,9 @@ export default function Login() {
     setBusy(true)
     try {
       await login(email, password)
-      navigate('/')
+      // Go back to where the user was heading (for example a scanned check-in link).
+      const from = location.state?.from
+      navigate(typeof from === 'string' && from.startsWith('/') ? from : '/', { replace: true })
     } catch (err) {
       setError(err.message)
     } finally {

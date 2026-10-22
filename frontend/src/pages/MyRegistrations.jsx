@@ -1,9 +1,34 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { STATUS_LABEL, describeError, fmt } from './eventUtils'
 
 const REG_LABEL = { CONFIRMED: 'Registered', WAITLISTED: 'Waitlisted', CANCELLED: 'Cancelled' }
 const REG_BADGE = { CONFIRMED: 'APPROVED', WAITLISTED: 'PENDING', CANCELLED: 'CANCELLED' }
+
+const CHECKIN_OPENS_MS = 30 * 60 * 1000
+
+function FeedbackForm({ eventId, onDone }) {
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [error, setError] = useState('')
+  async function send(e) {
+    e.preventDefault()
+    setError('')
+    try { await api(`/api/events/${eventId}/feedback`, { method: 'POST', body: { rating: Number(rating), comment } }); onDone() }
+    catch (err) { setError(describeError(err)) }
+  }
+  return (
+    <form className="row" onSubmit={send}>
+      <select value={rating} onChange={(e) => setRating(e.target.value)} aria-label="Rating">
+        {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
+      </select>
+      <input placeholder="Comment (optional)" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={1000} />
+      <button>Send feedback</button>
+      {error && <span className="error">{error}</span>}
+    </form>
+  )
+}
 
 export default function MyRegistrations() {
   const [items, setItems] = useState([])
@@ -29,7 +54,12 @@ export default function MyRegistrations() {
         <table>
           <thead><tr><th>Event</th><th>When</th><th>My place</th><th /></tr></thead>
           <tbody>
-            {items.map(({ registration: r, eventTitle, start, eventStatus, waitlistPosition }) => (
+            {items.map(({ registration: r, eventTitle, start, end, eventStatus, waitlistPosition, checkedIn, feedbackGiven }) => {
+              const now = Date.now()
+              const checkinOpen = r.status === 'CONFIRMED' && eventStatus === 'APPROVED' && !checkedIn
+                && now >= new Date(start).getTime() - CHECKIN_OPENS_MS && now <= new Date(end).getTime()
+              const started = now >= new Date(start).getTime()
+              return (
               <tr key={r.id}>
                 <td>{eventTitle}
                   {eventStatus !== 'APPROVED' && <div className="muted">Event is {STATUS_LABEL[eventStatus]?.toLowerCase()}</div>}
@@ -40,16 +70,23 @@ export default function MyRegistrations() {
                     {REG_LABEL[r.status]}{r.status === 'WAITLISTED' && ` #${waitlistPosition}`}
                   </span>
                   {r.promoted && r.status === 'CONFIRMED' && <div className="muted">Moved up from the waitlist</div>}
+                  {checkedIn && <div className="muted">Checked in</div>}
                 </td>
                 <td>
-                  {r.status !== 'CANCELLED' && eventStatus === 'APPROVED' && new Date(start) > new Date() && (
-                    <button className="secondary" onClick={() => cancel(r.eventId)}>
-                      {r.status === 'CONFIRMED' ? 'Cancel' : 'Leave waitlist'}
-                    </button>
-                  )}
+                  <div className="stack" style={{ marginBottom: 0 }}>
+                    {checkinOpen && <Link to={`/checkin/${r.eventId}`}><button>Check in</button></Link>}
+                    {checkedIn && started && !feedbackGiven && <FeedbackForm eventId={r.eventId} onDone={load} />}
+                    {feedbackGiven && <span className="muted">Thanks for your feedback</span>}
+                    {r.status !== 'CANCELLED' && eventStatus === 'APPROVED' && !started && (
+                      <button className="secondary" onClick={() => cancel(r.eventId)}>
+                        {r.status === 'CONFIRMED' ? 'Cancel' : 'Leave waitlist'}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       )}

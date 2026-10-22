@@ -4,7 +4,10 @@ import ProtectedRoute from './auth/ProtectedRoute'
 import AdminUsers from './pages/AdminUsers'
 import ApprovalQueue from './pages/ApprovalQueue'
 import BookResource from './pages/BookResource'
+import CheckIn from './pages/CheckIn'
+import CheckinScreen from './pages/CheckinScreen'
 import Clubs from './pages/Clubs'
+import EventReport from './pages/EventReport'
 import Events from './pages/Events'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -19,6 +22,7 @@ const MANAGERS = [ROLES.RESOURCE_ADMIN, ROLES.SUPER_ADMIN]
 const BOOKERS = [ROLES.CLUB_ORGANIZER, ROLES.RESOURCE_ADMIN, ROLES.SUPER_ADMIN]
 const ORGANIZERS = [ROLES.CLUB_ORGANIZER, ROLES.SUPER_ADMIN]
 const ADVISORS = [ROLES.FACULTY_ADVISOR, ROLES.SUPER_ADMIN]
+const INSIDERS = [ROLES.CLUB_ORGANIZER, ROLES.FACULTY_ADVISOR, ROLES.RESOURCE_ADMIN, ROLES.SUPER_ADMIN]
 
 function Nav() {
   const { user, logout } = useAuth()
@@ -65,9 +69,14 @@ export default function App() {
             <Route path="/resources" element={<Resources />} />
             <Route path="/events" element={<Events />} />
             <Route path="/registrations" element={<MyRegistrations />} />
+            <Route path="/checkin/:id" element={<CheckIn />} />
           </Route>
           <Route element={<ProtectedRoute allow={ORGANIZERS} />}>
             <Route path="/my-events" element={<MyEvents />} />
+          </Route>
+          <Route element={<ProtectedRoute allow={INSIDERS} />}>
+            <Route path="/events/:id/checkin" element={<CheckinScreen />} />
+            <Route path="/events/:id/report" element={<EventReport />} />
           </Route>
           <Route element={<ProtectedRoute allow={ADVISORS} />}>
             <Route path="/advisor" element={<ReviewQueue key="advisor" title="Advisor review"

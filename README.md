@@ -61,7 +61,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Done: 40 of 40 tests pass, including 20 parallel requests creating exactly one booking on MongoDB Atlas |
 | 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Done: 64 of 64 tests pass on MongoDB Atlas; an event goes Draft to Approved and reserves its room |
 | 4. Registration | Capacity, waitlist, auto-promotion | Done: 76 of 76 tests pass on MongoDB Atlas; 30 parallel registrations fill exactly 10 seats |
-| 5. Attendance and feedback | Rotating QR, check-in, feedback, notifications | Not started |
+| 5. Attendance and feedback | Rotating QR, check-in, feedback, report | Code written; needs `mvn test` with `MONGODB_URI` set |
 | 6. Reports and polish | Utilization report, dashboard, docs, demo script | Not started |
 
 ### Verification status
@@ -79,6 +79,9 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 - Phase 4: `mvn test` passes 76 of 76 against MongoDB Atlas, including `RegistrationFlowTest` (9): 30 parallel
   registrations fill exactly 10 seats and waitlist 20; cancelling a seat promotes the first waitlisted student; a cancel
   racing a new registration never overfills; waitlist positions stay in order.
+- Phase 5: `RotatingCodeTest` (13) passes. `AttendanceFlowTest` (a full event runs end to end: check-in, feedback, report;
+  old or wrong codes rejected; only confirmed registrants check in; check-in open only around the event; feedback only from
+  attendees, once) and `AttendanceAccessTest` were written without being compiled here, so run `mvn test` with `MONGODB_URI` set.
 - Frontend: `npm run build` passes.
 
 ## Roles
@@ -124,7 +127,16 @@ the UI only hides pages.
 | POST /api/events/{id}/register, /unregister | Logged in | Register (or join the waitlist when full); cancel. Cancelling a seat promotes the first waitlisted student |
 | GET /api/registrations/mine | Logged in | Your registrations with waitlist position |
 | GET /api/events/{id}/registrations | Club organizers, advisor, admins | Registered list and waitlist in order |
+| GET /api/events/{id}/checkin-code | Club organizers, advisor, admins | Current 6-character code (changes every 30 s), live check-in count |
+| POST /api/events/{id}/checkin | Confirmed registrant | Check in with the code (current or previous one). Opens 30 min before start, closes at the end |
+| POST /api/events/{id}/feedback | Students who checked in | Rating 1 to 5 and optional comment, once, up to 14 days after the event |
+| GET /api/events/{id}/report | Club organizers, advisor, admins | Registered, attended, no-shows, attendance rate, ratings, anonymous comments |
 | GET /api/events/{id}/history | Club organizers, advisor, admins | Audit log: who did what, when, and why |
+
+**Check-in on a phone during development:** the QR code links to the address the organizer's browser is using, so
+`localhost` only works on the same computer. To scan with a phone on the same Wi-Fi, start the frontend with
+`npm run dev -- --host` and open the check-in screen through the address it prints (for example `http://192.168.1.20:5173`).
+Students can always type the 6-character code instead.
 
 A booking that breaks rules returns HTTP 409 with one entry per rule in `fields`
 (`OVERLAP`, `BUFFER`, `CAPACITY`, `BLOCKED`, `ACCESS`, `OUTSIDE_HOURS`, `RESOURCE_INACTIVE`, `INVALID_TIME`).
