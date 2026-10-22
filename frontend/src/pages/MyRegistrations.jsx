@@ -8,9 +8,10 @@ const REG_BADGE = { CONFIRMED: 'APPROVED', WAITLISTED: 'PENDING', CANCELLED: 'CA
 export default function MyRegistrations() {
   const [items, setItems] = useState([])
   const [error, setError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(() => {
-    api('/api/registrations/mine').then(setItems).catch((e) => setError(e.message))
+    api('/api/registrations/mine').then(setItems).catch((e) => setError(e.message)).finally(() => setLoaded(true))
   }, [])
   useEffect(load, [load])
 
@@ -24,7 +25,7 @@ export default function MyRegistrations() {
     <div className="card">
       <h1>My registrations</h1>
       {error && <p className="error" role="alert">{error}</p>}
-      {items.length === 0 ? <p className="muted">You have not registered for any events yet.</p> : (
+      {!loaded ? <p className="muted">Loading...</p> : items.length === 0 ? <p className="muted">You have not registered for any events yet.</p> : (
         <table>
           <thead><tr><th>Event</th><th>When</th><th>My place</th><th /></tr></thead>
           <tbody>

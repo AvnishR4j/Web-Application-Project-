@@ -9,6 +9,7 @@ export default function ApprovalQueue() {
   const [rejecting, setRejecting] = useState(null) // booking id being rejected
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(() => {
     Promise.all([api('/api/bookings?status=PENDING'), api('/api/resources?includeInactive=true')])
@@ -18,6 +19,7 @@ export default function ApprovalQueue() {
         setNames(Object.fromEntries(resources.map((r) => [r.id, r.name])))
       })
       .catch((e) => setError(e.message))
+      .finally(() => setLoaded(true))
   }, [])
 
   useEffect(load, [load])
@@ -39,7 +41,7 @@ export default function ApprovalQueue() {
     <div className="card">
       <h1>Pending booking requests</h1>
       {error && <p className="error" role="alert">{error}</p>}
-      {items.length === 0 ? <p className="muted">Nothing waiting for review.</p> : (
+      {!loaded ? <p className="muted">Loading...</p> : items.length === 0 ? <p className="muted">Nothing waiting for review.</p> : (
         <table>
           <thead>
             <tr><th>Resource</th><th>Requested by</th><th>Purpose</th><th>From</th><th>To</th><th>People</th><th /></tr>

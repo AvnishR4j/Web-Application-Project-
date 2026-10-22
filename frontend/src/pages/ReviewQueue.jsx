@@ -12,11 +12,13 @@ export default function ReviewQueue({ title, intro, queuePath, approveAction, re
   const [reason, setReason] = useState('')
   const [historyFor, setHistoryFor] = useState(null)
   const [error, setError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(() => {
     Promise.all([api(queuePath), api('/api/clubs'), api('/api/resources?includeInactive=true')])
       .then(([e, c, r]) => { setEvents(e); setClubs(byId(c)); setRooms(byId(r)) })
       .catch((err) => setError(err.message))
+      .finally(() => setLoaded(true))
   }, [queuePath])
   useEffect(load, [load])
 
@@ -33,7 +35,7 @@ export default function ReviewQueue({ title, intro, queuePath, approveAction, re
       <h1>{title}</h1>
       <p className="muted">{intro}</p>
       {error && <p className="error" role="alert">{error}</p>}
-      {events.length === 0 ? <p className="muted">{empty}</p> : (
+      {!loaded ? <p className="muted">Loading...</p> : events.length === 0 ? <p className="muted">{empty}</p> : (
         <table>
           <thead><tr><th>Event</th><th>Club</th><th>When</th><th>Venue</th><th>People</th><th /></tr></thead>
           <tbody>

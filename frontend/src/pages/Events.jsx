@@ -10,6 +10,7 @@ export default function Events() {
   const [rooms, setRooms] = useState({})
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(null)
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(() => {
     Promise.all([api('/api/events'), api('/api/events/seats'), api('/api/clubs'), api('/api/resources')])
@@ -19,6 +20,7 @@ export default function Events() {
         setClubs(byId(c)); setRooms(byId(r))
       })
       .catch((err) => setError(err.message))
+      .finally(() => setLoaded(true))
   }, [])
   useEffect(load, [load])
 
@@ -33,7 +35,7 @@ export default function Events() {
     <div className="card">
       <h1>Upcoming events</h1>
       {error && <p className="error" role="alert">{error}</p>}
-      {events.length === 0 ? <p className="muted">No approved events yet.</p> : (
+      {!loaded ? <p className="muted">Loading...</p> : events.length === 0 ? <p className="muted">No approved events yet.</p> : (
         <div className="stack">
           {events.map((e) => {
             const s = seats[e.id]
