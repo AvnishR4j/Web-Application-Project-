@@ -2,6 +2,7 @@ package com.campus.booking.repository;
 
 import com.campus.booking.model.Registration;
 import com.campus.booking.model.RegistrationStatus;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -22,6 +23,9 @@ public interface RegistrationRepository extends MongoRepository<Registration, St
     List<Registration> findByUserEmailOrderByCreatedAtDesc(String userEmail);
 
     List<Registration> findByUserEmailAndStatus(String userEmail, RegistrationStatus status);
+
+    /** Every registration with one of these statuses across many events, for batched seat counts. */
+    List<Registration> findByEventIdInAndStatusIn(Collection<String> eventIds, Collection<RegistrationStatus> statuses);
 
     void deleteByEventId(String eventId);
 }
