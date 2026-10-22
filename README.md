@@ -57,7 +57,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1. Foundation | Repo, replica set, auth, four roles, role-protected pages, seed data | Done: `mvn test` passes (10 of 10) |
-| 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Code written; needs `mvn test` and the parallel test on a replica set |
+| 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Done: 40 of 40 tests pass, including 20 parallel requests creating exactly one booking on MongoDB Atlas |
 | 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Not started |
 | 4. Registration | Capacity, waitlist, auto-promotion | Not started |
 | 5. Attendance and feedback | Rotating QR, check-in, feedback, notifications | Not started |
@@ -67,10 +67,11 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 
 - Phase 1: `mvn test` passes on a developer machine (Java 21, Maven, Spring Boot 3.3.5): token handling and role access.
   Not yet exercised end to end against a real MongoDB (register, login, role change).
-- Phase 2: the conflict engine (`ConflictEngine`) has 16 unit tests that pass. The service, controllers and
-  access tests were written without being able to compile them, so run `cd backend && mvn test` and fix anything it reports.
-  `BookingConcurrencyTest` (20 parallel requests for one slot create exactly one booking) needs a real MongoDB replica set and is
-  skipped unless `MONGODB_URI` is set, for example to a free MongoDB Atlas cluster with a throwaway database name.
+- Phase 2: `mvn test` passes 40 of 40 against a MongoDB Atlas replica set: the 16 conflict-engine tests, role access for
+  resources and bookings, and `BookingConcurrencyTest` (20 parallel requests for one slot create exactly one booking; a
+  repeated Idempotency-Key returns the same booking; cancelling frees the slot). `BookingConcurrencyTest` is skipped unless
+  `MONGODB_URI` is set; point it at a throwaway database, because it creates and deletes its own data.
+  Atlas note: the cluster's IP Access List must allow the machine running the tests.
 - Frontend: `npm run build` passes.
 
 ## Roles
