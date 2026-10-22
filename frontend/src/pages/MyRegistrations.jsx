@@ -34,9 +34,11 @@ export default function MyRegistrations() {
   const [items, setItems] = useState([])
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [standing, setStanding] = useState(null)
 
   const load = useCallback(() => {
     api('/api/registrations/mine').then(setItems).catch((e) => setError(e.message)).finally(() => setLoaded(true))
+    api('/api/registrations/standing').then(setStanding).catch(() => setStanding(null))
   }, [])
   useEffect(load, [load])
 
@@ -50,6 +52,13 @@ export default function MyRegistrations() {
     <div className="card">
       <h1>My registrations</h1>
       {error && <p className="error" role="alert">{error}</p>}
+      {standing && standing.limit > 0 && standing.noShows > 0 && (
+        <p className={`notice ${standing.blocked ? 'bad' : ''}`} role="status">
+          {standing.blocked
+            ? `You missed ${standing.noShows} events you registered for in the last ${standing.windowDays} days, so new registrations are paused for now.`
+            : `You missed ${standing.noShows} event${standing.noShows > 1 ? 's' : ''} you registered for in the last ${standing.windowDays} days. At ${standing.limit}, new registrations are paused. Cancel ahead if you cannot come.`}
+        </p>
+      )}
       {!loaded ? <p className="muted">Loading...</p> : items.length === 0 ? <p className="muted">You have not registered for any events yet.</p> : (
         <table>
           <thead><tr><th>Event</th><th>When</th><th>My place</th><th /></tr></thead>

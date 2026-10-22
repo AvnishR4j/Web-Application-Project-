@@ -2,6 +2,7 @@ import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { ROLES, useAuth } from './auth/AuthContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import AdminUsers from './pages/AdminUsers'
+import AuditLog from './pages/AuditLog'
 import ApprovalQueue from './pages/ApprovalQueue'
 import BookResource from './pages/BookResource'
 import CheckIn from './pages/CheckIn'
@@ -15,6 +16,7 @@ import MyBookings from './pages/MyBookings'
 import MyEvents from './pages/MyEvents'
 import MyRegistrations from './pages/MyRegistrations'
 import Register from './pages/Register'
+import Reports from './pages/Reports'
 import Resources from './pages/Resources'
 import ReviewQueue from './pages/ReviewQueue'
 
@@ -41,7 +43,9 @@ function Nav() {
           {BOOKERS.includes(user.role) && <Link to="/book">Book</Link>}
           {BOOKERS.includes(user.role) && <Link to="/bookings">My bookings</Link>}
           {MANAGERS.includes(user.role) && <Link to="/approvals">Booking approvals</Link>}
+          {MANAGERS.includes(user.role) && <Link to="/reports">Reports</Link>}
           {user.role === ROLES.SUPER_ADMIN && <Link to="/clubs">Clubs</Link>}
+          {user.role === ROLES.SUPER_ADMIN && <Link to="/admin/audit">Audit log</Link>}
         </nav>
       )}
       {user && (
@@ -90,6 +94,7 @@ export default function App() {
           </Route>
           <Route element={<ProtectedRoute allow={MANAGERS} />}>
             <Route path="/approvals" element={<ApprovalQueue />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/event-approvals" element={<ReviewQueue key="manager" title="Event approvals"
               intro="Events already approved by their club's advisor. Approving confirms the room and publishes the event."
               queuePath="/api/events/manager-queue" approveAction="manager-approve" rejectAction="manager-reject"
@@ -98,6 +103,7 @@ export default function App() {
           <Route element={<ProtectedRoute allow={[ROLES.SUPER_ADMIN]} />}>
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/clubs" element={<Clubs />} />
+            <Route path="/admin/audit" element={<AuditLog />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
