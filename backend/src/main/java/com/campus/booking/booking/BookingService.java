@@ -88,13 +88,13 @@ public class BookingService {
             if (prior.isPresent()) {
                 return prior.get();
             }
-            // Cheap rejection first: once someone else holds the slot, losers leave here without
-            // opening a transaction, so they stop colliding with each other on retries.
-            List<Violation> early = evaluate(requireResource(in.resourceId()), in, who);
-            if (!early.isEmpty()) {
-                throw new BookingConflictException(early);
-            }
             try {
+                // Cheap rejection first: once someone else holds the slot, losers leave here without
+                // opening a transaction, so they stop colliding with each other on retries.
+                List<Violation> early = evaluate(requireResource(in.resourceId()), in, who);
+                if (!early.isEmpty()) {
+                    throw new BookingConflictException(early);
+                }
                 return tx.execute(status -> createInTransaction(in, key, who));
             } catch (DuplicateKeyException duplicate) {
                 Optional<Booking> winner = bookings.findByIdempotencyKey(key);
@@ -102,6 +102,13 @@ public class BookingService {
                     return winner.get();
                 }
                 throw duplicate;
+            } catch (BookingConflictException conflict) {
+                // The "conflict" may be this same request's own booking, committed by a parallel retry.
+                Optional<Booking> mine = bookings.findByIdempotencyKey(key);
+                if (mine.isPresent()) {
+                    return mine.get();
+                }
+                throw conflict;
             } catch (RuntimeException e) {
                 if (!isTransient(e)) {
                     throw e;
