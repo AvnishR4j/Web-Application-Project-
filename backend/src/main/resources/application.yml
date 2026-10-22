@@ -24,6 +24,10 @@ app:
     secret: ${CHECKIN_SECRET:${app.jwt.secret}}
     # Check-in opens this many minutes before an event starts and closes when it ends.
     opens-minutes-before: ${CHECKIN_OPENS_MINUTES_BEFORE:30}
+  noshow:
+    # Missing this many registered events in the window pauses new registrations (0 turns the rule off).
+    limit: ${NOSHOW_LIMIT:3}
+    window-days: ${NOSHOW_WINDOW_DAYS:60}
   seed-demo-data: ${SEED_DEMO_DATA:false}
 
 server:

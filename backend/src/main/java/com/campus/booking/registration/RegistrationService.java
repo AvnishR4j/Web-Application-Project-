@@ -3,6 +3,7 @@ package com.campus.booking.registration;
 import com.campus.booking.booking.Requester;
 import com.campus.booking.exception.ApiExceptions.BadRequestException;
 import com.campus.booking.exception.ApiExceptions.ConflictException;
+import com.campus.booking.exception.ApiExceptions.ForbiddenException;
 import com.campus.booking.exception.ApiExceptions.NotFoundException;
 import com.campus.booking.model.Event;
 import com.campus.booking.model.EventStatus;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -54,6 +56,10 @@ public class RegistrationService {
     public record EventRegistrations(int capacity, List<Registration> confirmed, List<Registration> waitlist) {
     }
 
+    /** The plan's no-show rule: too many missed events in the window pauses new registrations. */
+    public record Standing(long noShows, int limit, int windowDays, boolean blocked) {
+    }
+
     private final RegistrationRepository registrations;
     private final EventRepository events;
     private final AttendanceRepository attendance;
@@ -61,10 +67,14 @@ public class RegistrationService {
     private final MongoTemplate mongo;
     private final TransactionTemplate tx;
     private final Clock clock;
+    private final int noShowLimit;
+    private final int noShowWindowDays;
 
     public RegistrationService(RegistrationRepository registrations, EventRepository events,
                                AttendanceRepository attendance, FeedbackRepository feedback, MongoTemplate mongo,
-                               MongoTransactionManager txManager, Clock clock) {
+                               MongoTransactionManager txManager, Clock clock,
+                               @Value("${app.noshow.limit}") int noShowLimit,
+                               @Value("${app.noshow.window-days}") int noShowWindowDays) {
         this.registrations = registrations;
         this.events = events;
         this.attendance = attendance;
@@ -72,6 +82,8 @@ public class RegistrationService {
         this.mongo = mongo;
         this.tx = new TransactionTemplate(txManager);
         this.clock = clock;
+        this.noShowLimit = noShowLimit;
+        this.noShowWindowDays = noShowWindowDays;
     }
 
     /** Registering twice returns the existing place; re-registering after cancelling joins the back of the queue. */
@@ -97,6 +109,12 @@ public class RegistrationService {
         Optional<Registration> existing = registrations.findByEventIdAndUserEmail(eventId, who.email());
         if (existing.isPresent() && existing.get().getStatus() != RegistrationStatus.CANCELLED) {
             return existing.get();
+        }
+        Standing standing = standing(who.email());
+        if (standing.blocked()) {
+            throw new ForbiddenException("You missed " + standing.noShows() + " events you registered for in the last "
+                    + standing.windowDays() + " days, so new registrations are paused. They reopen as older misses "
+                    + "pass the " + standing.windowDays() + "-day mark.");
         }
         Registration r = existing.orElseGet(Registration::new);
         r.setEventId(eventId);
@@ -169,6 +187,26 @@ public class RegistrationService {
             registrations.save(r);
             confirmed++;
         }
+    }
+
+    /**
+     * Counts events the student was registered for (confirmed), that went ahead (approved or completed), ended
+     * within the window, and that they did not check in to. Cancelled events and cancelled registrations never count.
+     */
+    public Standing standing(String email) {
+        Instant now = Instant.now(clock);
+        Instant since = now.minus(Duration.ofDays(noShowWindowDays));
+        List<String> eventIds = registrations.findByUserEmailAndStatus(email, RegistrationStatus.CONFIRMED).stream()
+                .map(Registration::getEventId).toList();
+        long missed = 0;
+        for (Event e : events.findAllById(eventIds)) {
+            boolean wentAhead = e.getStatus() == EventStatus.APPROVED || e.getStatus() == EventStatus.COMPLETED;
+            boolean endedInWindow = e.getEnd().isBefore(now) && e.getEnd().isAfter(since);
+            if (wentAhead && endedInWindow && !attendance.existsByEventIdAndUserEmail(e.getId(), email)) {
+                missed++;
+            }
+        }
+        return new Standing(missed, noShowLimit, noShowWindowDays, noShowLimit > 0 && missed >= noShowLimit);
     }
 
     // ----- reading -----

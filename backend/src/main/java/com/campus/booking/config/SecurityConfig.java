@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/bookings/*/approve", "/api/bookings/*/reject")
                     .hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/bookings").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/reports/**").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")
                 // Clubs: anyone logged in can read, only super admins manage them.
                 .requestMatchers(HttpMethod.POST, "/api/clubs").hasRole("SUPER_ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/clubs/*").hasRole("SUPER_ADMIN")

@@ -21,5 +21,7 @@ public interface RegistrationRepository extends MongoRepository<Registration, St
 
     List<Registration> findByUserEmailOrderByCreatedAtDesc(String userEmail);
 
+    List<Registration> findByUserEmailAndStatus(String userEmail, RegistrationStatus status);
+
     void deleteByEventId(String eventId);
 }

@@ -23,14 +23,14 @@ const ROLE_INFO = {
   [ROLES.RESOURCE_ADMIN]: {
     title: 'Resource admin',
     links: [['/event-approvals', 'Give final approval to events'], ['/approvals', 'Review booking requests'],
-      ['/resources', 'Manage rooms, labs and equipment']],
-    later: ['Utilization reports'],
+      ['/resources', 'Manage rooms, labs and equipment'], ['/reports', 'Room use and attendance reports']],
+    later: [],
   },
   [ROLES.SUPER_ADMIN]: {
     title: 'Super admin',
     links: [['/admin/users', 'Manage users and roles'], ['/clubs', 'Manage clubs'],
-      ['/event-approvals', 'Event approvals']],
-    later: ['Audit log and reports'],
+      ['/event-approvals', 'Event approvals'], ['/reports', 'Reports'], ['/admin/audit', 'Audit log']],
+    later: [],
   },
 }
 

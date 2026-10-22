@@ -20,18 +20,19 @@ docker-compose.yml   MongoDB as a single-node replica set
 
 ## Quick start
 
-Requirements: Java 21, Maven 3.9+, Node 20+, Docker.
+Requirements: Java 21, Maven 3.9+, Node 20+, and MongoDB as a replica set (transactions need one).
 
-1. **Database.** Transactions (needed for conflict-free booking in Phase 2) only work on a replica set,
-   so use the compose file, which sets one up:
-   ```
-   docker compose up -d
-   ```
+1. **Database**, either:
+   - Docker: `docker compose up -d` (a single-node replica set on localhost), or
+   - MongoDB Atlas free tier (a replica set already): create a cluster and a database user, allow your IP
+     in Network Access, and copy the connection string with a database name, for example
+     `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/campus_booking?retryWrites=true&w=majority`.
 2. **Backend** (http://localhost:8080):
    ```
    cd backend
    SEED_DEMO_DATA=true mvn spring-boot:run
    ```
+   With Atlas, put `MONGODB_URI="<connection string>"` in front of that command.
 3. **Frontend** (http://localhost:5173):
    ```
    cd frontend
@@ -39,7 +40,23 @@ Requirements: Java 21, Maven 3.9+, Node 20+, Docker.
    npm run dev
    ```
 
-Run the backend tests with `cd backend && mvn test`.
+Run the backend tests with `cd backend && mvn test`. The concurrency and workflow tests run only when
+`MONGODB_URI` points at a replica set; use a separate database name such as `campus_booking_test`.
+
+**[docs/DEMO.md](docs/DEMO.md)** walks through every workflow in about 15 minutes.
+
+### Settings
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `MONGODB_URI` | local replica set | Database connection string |
+| `JWT_SECRET` | dev value | 32+ characters; set a real one outside development |
+| `SEED_DEMO_DATA` | false | Create demo users, rooms and a club (development only) |
+| `BOOKING_ZONE` | Asia/Kolkata | Time zone for room opening hours |
+| `EVENT_MIN_LEAD_DAYS` | 7 | Notice required for event requests |
+| `CHECKIN_OPENS_MINUTES_BEFORE` | 30 | When event check-in opens |
+| `CHECKIN_SECRET` | `JWT_SECRET` | Signs the rotating check-in codes |
+| `NOSHOW_LIMIT` / `NOSHOW_WINDOW_DAYS` | 3 / 60 | Missed events that pause new registrations (0 turns it off) |
 
 ### Demo accounts (only when `SEED_DEMO_DATA=true`, development only)
 
@@ -62,7 +79,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Done: 64 of 64 tests pass on MongoDB Atlas; an event goes Draft to Approved and reserves its room |
 | 4. Registration | Capacity, waitlist, auto-promotion | Done: 76 of 76 tests pass on MongoDB Atlas; 30 parallel registrations fill exactly 10 seats |
 | 5. Attendance and feedback | Rotating QR, check-in, feedback, report | Done: 101 of 101 tests pass on MongoDB Atlas; a full event runs end to end |
-| 6. Reports and polish | Utilization report, dashboard, docs, demo script | Not started |
+| 6. Reports and polish | Utilization and attendance reports, audit log page, no-show rule, demo script | Code written; needs `mvn test` with `MONGODB_URI` set |
 
 ### Verification status
 
@@ -82,6 +99,8 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 - Phase 5: `mvn test` passes 101 of 101 against MongoDB Atlas, including `RotatingCodeTest` (13), `AttendanceFlowTest` (6:
   a full event runs end to end with check-in, feedback and report; old or wrong codes rejected; only confirmed registrants;
   check-in only around the event; feedback only from attendees, once) and `AttendanceAccessTest` (6).
+- Phase 6: `UtilizationCalculatorTest` (6) passes. `NoShowAndReportFlowTest` (no-show rule; attendance and utilization
+  reports against real data) and `ReportAccessTest` were written without being compiled here, so run `mvn test` with `MONGODB_URI` set.
 - Frontend: `npm run build` passes.
 
 ## Roles
@@ -131,6 +150,10 @@ the UI only hides pages.
 | POST /api/events/{id}/checkin | Confirmed registrant | Check in with the code (current or previous one). Opens 30 min before start, closes at the end |
 | POST /api/events/{id}/feedback | Students who checked in | Rating 1 to 5 and optional comment, once, up to 14 days after the event |
 | GET /api/events/{id}/report | Club organizers, advisor, admins | Registered, attended, no-shows, attendance rate, ratings, anonymous comments |
+| GET /api/registrations/standing | Logged in | Your recent no-shows and whether registration is paused |
+| GET /api/reports/utilization?from&to | Resource admin, super admin | Approved booked time against opening hours, per resource |
+| GET /api/reports/attendance?from&to | Resource admin, super admin | Registered, attended and no-shows for ended events, by event and club |
+| GET /api/admin/audit?limit= | Super admin | Every change to every event, newest first |
 | GET /api/events/{id}/history | Club organizers, advisor, admins | Audit log: who did what, when, and why |
 
 **Check-in on a phone during development:** the QR code links to the address the organizer's browser is using, so
@@ -143,3 +166,9 @@ A booking that breaks rules returns HTTP 409 with one entry per rule in `fields`
 Opening hours use the time zone in `BOOKING_ZONE` (default Asia/Kolkata). A pending request already holds its slot.
 
 Errors use one shape: `{"status": 409, "message": "...", "fields": {}}`.
+
+## Not built (parked in the plan)
+
+Paid tickets, single sign-on and student-system integration, a mobile app, recurring bookings, event
+recommendations, and email notifications (the email provider is still an open decision). Check-in for room
+bookings (the plan's 45-minute grace window) is also not built: no-shows are tracked for event registrations.

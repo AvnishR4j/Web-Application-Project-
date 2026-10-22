@@ -20,6 +20,8 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     List<Booking> findByResourceIdAndStatusInAndStartLessThanAndEndGreaterThan(
             String resourceId, Collection<BookingStatus> statuses, Instant to, Instant from);
 
+    List<Booking> findByStatusAndStartLessThanAndEndGreaterThan(BookingStatus status, Instant to, Instant from);
+
     long countByResourceId(String resourceId);
 
     void deleteByResourceId(String resourceId);
