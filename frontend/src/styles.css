@@ -465,12 +465,14 @@ td .muted { font-size: 0.88rem; }
 .auth { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 100vh; }
 .auth-board {
   position: relative; overflow: hidden; padding: 44px clamp(24px, 5vw, 72px);
-  background: #1f2226; color: #ece8de; display: flex; flex-direction: column; justify-content: space-between; gap: 28px;
+  background: #191c1f; color: #ece8de; display: flex; flex-direction: column; justify-content: space-between; gap: 28px;
+  border-right: 1px solid #2c3137;
 }
 .auth-board .brand { color: #ece8de; }
 .auth-board h1 { color: #ece8de; font-size: clamp(2.2rem, 1.5rem + 2.6vw, 3.4rem); max-width: 14ch; }
 .auth-board p { color: #a7acb2; font-size: 1.05rem; max-width: 42ch; }
-.auth-dial { position: absolute; right: -150px; bottom: -150px; width: 560px; height: 560px; pointer-events: none; }
+.auth-hero { display: flex; flex-direction: column; gap: 6px; }
+.auth-dial { width: clamp(200px, 30vh, 300px); height: auto; aspect-ratio: 1; margin: 0 0 26px -6px; pointer-events: none; }
 .auth-dial .t { fill: none; stroke: #33373d; }
 .auth-dial .a { fill: none; stroke-linecap: round; }
 @media (prefers-reduced-motion: no-preference) {
@@ -482,7 +484,7 @@ td .muted { font-size: 0.88rem; }
 }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tick { from { transform: rotate(-70deg); opacity: 0; } to { transform: none; opacity: 1; } }
-.auth-board > *:not(.auth-dial) { position: relative; z-index: 1; }
+
 .auth-form { display: flex; align-items: center; justify-content: center; padding: 40px 20px; background: var(--bg); }
 .auth-form form { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; }
 .auth-form h2 { margin: 0; font-size: 1.9rem; font-weight: 300; letter-spacing: -0.02em; }
@@ -492,7 +494,7 @@ td .muted { font-size: 0.88rem; }
   .auth { grid-template-columns: 1fr; }
   .auth-board { padding: 28px 20px 34px; gap: 14px; }
   .auth-board h1 { font-size: 2.1rem; }
-  .auth-dial { width: 300px; height: 300px; right: -110px; top: 18px; bottom: auto; opacity: 0.55; }
+  .auth-dial { width: 120px; margin-bottom: 10px; }
 }
 
 /* ---------- Check-in screen ---------- */
