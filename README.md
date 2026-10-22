@@ -60,7 +60,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | 1. Foundation | Repo, replica set, auth, four roles, role-protected pages, seed data | Done: `mvn test` passes (10 of 10) |
 | 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Done: 40 of 40 tests pass, including 20 parallel requests creating exactly one booking on MongoDB Atlas |
 | 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Done: 64 of 64 tests pass on MongoDB Atlas; an event goes Draft to Approved and reserves its room |
-| 4. Registration | Capacity, waitlist, auto-promotion | Code written; needs `mvn test` with `MONGODB_URI` set |
+| 4. Registration | Capacity, waitlist, auto-promotion | Done: 76 of 76 tests pass on MongoDB Atlas; 30 parallel registrations fill exactly 10 seats |
 | 5. Attendance and feedback | Rotating QR, check-in, feedback, notifications | Not started |
 | 6. Reports and polish | Utilization report, dashboard, docs, demo script | Not started |
 
@@ -76,9 +76,9 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 - Phase 3: `mvn test` passes 64 of 64 against MongoDB Atlas, including `EventStateMachineTest` (10), `EventAccessTest` (6)
   and `EventFlowTest` (8): Draft to Approved reserves the room; 7-day notice enforced; two events cannot hold one room;
   rejecting, cancelling or editing frees the room; only the club's own advisor can approve; the manager cannot skip the advisor.
-- Phase 4: `RegistrationFlowTest` (30 parallel registrations fill exactly 10 seats; cancelling a seat promotes the first
-  waitlisted student; a cancel racing a new registration never overfills) and `RegistrationAccessTest` were written without
-  being compiled here, so run `mvn test` with `MONGODB_URI` set.
+- Phase 4: `mvn test` passes 76 of 76 against MongoDB Atlas, including `RegistrationFlowTest` (9): 30 parallel
+  registrations fill exactly 10 seats and waitlist 20; cancelling a seat promotes the first waitlisted student; a cancel
+  racing a new registration never overfills; waitlist positions stay in order.
 - Frontend: `npm run build` passes.
 
 ## Roles
