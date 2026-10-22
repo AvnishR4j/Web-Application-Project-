@@ -32,7 +32,7 @@ export default function EventReport() {
           {[...r.ratings].reverse().map((x) => (
             <tr key={x.rating}>
               <td style={{ width: 70 }}>{x.rating} star{x.rating > 1 ? 's' : ''}</td>
-              <td><div style={{ background: 'var(--accent)', height: 12, borderRadius: 3, width: `${(x.count / maxCount) * 100}%`, minWidth: x.count ? 4 : 0 }} /></td>
+              <td><div style={{ background: 'var(--ok)', height: 12, borderRadius: 3, width: `${(x.count / maxCount) * 100}%`, minWidth: x.count ? 4 : 0 }} /></td>
               <td style={{ width: 40, textAlign: 'right' }}>{x.count}</td>
             </tr>
           ))}

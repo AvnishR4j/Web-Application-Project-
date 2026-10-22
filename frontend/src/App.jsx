@@ -113,7 +113,7 @@ function Shell({ children }) {
       </header>
       {open && <div className="scrim" onClick={() => setOpen(false)} />}
       <nav className={`rail${open ? ' open' : ''}`} aria-label="Main">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
           <Link to="/" className="brand"><BrandMark />Campus Board</Link>
           {open && <button className="ghost" onClick={() => setOpen(false)} aria-label="Close menu"><Icon name="close" width="18" /></button>}
         </div>

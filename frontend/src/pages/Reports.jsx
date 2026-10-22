@@ -49,8 +49,8 @@ export default function Reports() {
                 <td>{hours(u.openMinutes)}</td>
                 <td>
                   <div className="row" style={{ flexWrap: 'nowrap' }}>
-                    <div style={{ flex: 1, background: 'var(--border)', borderRadius: 3, height: 10 }}>
-                      <div style={{ width: `${Math.min(100, u.utilization || 0)}%`, background: 'var(--accent)', height: 10, borderRadius: 3 }} />
+                    <div style={{ flex: 1, background: 'var(--line)', borderRadius: 3, height: 10 }}>
+                      <div style={{ width: `${Math.min(100, u.utilization || 0)}%`, background: 'var(--ok)', height: 10, borderRadius: 3 }} />
                     </div>
                     <span style={{ width: 52, textAlign: 'right' }}>{pct(u.utilization)}</span>
                   </div>

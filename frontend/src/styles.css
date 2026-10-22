@@ -151,8 +151,8 @@ strong { font-weight: 700; }
 .brand {
   display: flex; align-items: center; gap: 10px;
   padding: 4px 10px 18px;
-  font-family: var(--font-display); font-weight: 800; font-stretch: 125%;
-  font-size: 1.15rem; letter-spacing: -0.02em;
+  font-family: var(--font-display); font-weight: 800; font-stretch: 112%;
+  font-size: 1.1rem; letter-spacing: -0.02em; white-space: nowrap;
   color: var(--ink); text-decoration: none;
 }
 .brand-mark { width: 30px; height: 30px; flex: none; }
@@ -173,7 +173,8 @@ strong { font-weight: 700; }
 .who { padding: 4px 10px; }
 .who strong { display: block; font-size: 0.95rem; }
 .who span { font-size: 0.82rem; color: var(--muted); }
-.rail-actions { display: flex; gap: 6px; padding: 0 6px; }
+.rail-actions { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 2px; }
+.rail-actions button { white-space: nowrap; padding: 8px; }
 
 .topbar { display: none; }
 .content { padding: 36px clamp(16px, 3vw, 48px) 64px; max-width: 1180px; width: 100%; }
@@ -312,11 +313,13 @@ td .muted { font-size: 0.88rem; }
 }
 .daystrip-head h2 { margin: 0; font-size: 1.15rem; }
 .daystrip-scroll { overflow-x: auto; }
-.daystrip-grid { min-width: 760px; position: relative; }
+.daystrip-grid { min-width: 760px; position: relative; overflow: hidden; }
 .ds-hours, .ds-row { display: grid; grid-template-columns: var(--label) 1fr; }
 .ds-hours { border-bottom: 1px solid var(--line); background: var(--surface-2); }
-.ds-hours .ds-track { position: relative; height: 30px; }
-.ds-hour { position: absolute; top: 7px; transform: translateX(-50%); font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ds-hours .ds-track { position: relative; height: 30px; background-image: none; }
+.ds-hour { position: absolute; top: 7px; transform: translateX(-50%); font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ds-hour.first { transform: translateX(4px); }
+.ds-hour.last { transform: translateX(calc(-100% - 4px)); }
 .ds-row { border-bottom: 1px solid var(--line); min-height: 56px; }
 .ds-row:last-child { border-bottom: 0; }
 .ds-label { padding: 10px 14px; border-right: 1px solid var(--line); display: flex; flex-direction: column; justify-content: center; }
@@ -339,7 +342,7 @@ td .muted { font-size: 0.88rem; }
 .ds-block.PENDING { background: var(--amber-soft); border-color: var(--amber-fill); color: var(--ink); border-style: dashed; }
 .ds-now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--now); z-index: 2; pointer-events: none; }
 .ds-now::before {
-  content: attr(data-time); position: absolute; top: 4px; left: 4px;
+  content: attr(data-time); position: absolute; bottom: 4px; left: 4px; white-space: nowrap;
   font-size: 0.72rem; font-weight: 700; color: var(--now); background: var(--surface); padding: 0 4px; border-radius: 4px;
 }
 .ds-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); }
@@ -407,15 +410,17 @@ td .muted { font-size: 0.88rem; }
 }
 .ticket-stub::before { top: -1px; border-radius: 0 0 99px 99px; border-top: 0; }
 .ticket-stub::after { bottom: -1px; border-radius: 99px 99px 0 0; border-bottom: 0; }
-.stub-status { font-family: var(--font-display); font-stretch: 112%; font-weight: 800; font-size: 1.05rem; }
+.stub-status { white-space: nowrap; font-family: var(--font-display); font-stretch: 112%; font-weight: 800; font-size: 1.05rem; }
 .stub-status.CONFIRMED { color: var(--ok); }
 .stub-status.WAITLISTED { color: var(--amber); }
 .stub-status.CHECKED_IN { color: var(--green); }
 .stub-status.NONE { color: var(--muted); font-weight: 700; }
-.ticket-stub button { width: 100%; }
+.ticket-stub button { width: 100%; white-space: nowrap; }
 @media (max-width: 720px) {
   .ticket { grid-template-columns: 72px minmax(0, 1fr); }
-  .ticket-stub { grid-column: 1 / -1; border-left: 0; border-top: 2px dashed var(--line-strong); flex-direction: row; align-items: center; justify-content: space-between; }
+  .ticket-stub { grid-column: 1 / -1; border-left: 0; border-top: 2px dashed var(--line-strong); flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+  .ticket-stub > .muted { flex: 1 1 100%; order: 2; }
+  .ticket-stub > button, .ticket-stub > a { order: 3; }
   .ticket-stub::before, .ticket-stub::after { display: none; }
   .ticket-stub button { width: auto; }
 }

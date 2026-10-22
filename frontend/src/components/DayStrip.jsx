@@ -32,7 +32,9 @@ export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Camp
     async function load() {
       const all = await api('/api/resources')
       const list = resourceFilter ? all.filter((r) => r.id === resourceFilter) : all
-      const events = await api('/api/events').catch(() => [])
+      // Published events, plus the viewer's own club events (which include ones that already ended today).
+      const [open, mine] = await Promise.all([api('/api/events').catch(() => []), api('/api/events/mine').catch(() => [])])
+      const events = [...open, ...mine.filter((m) => !open.some((o) => o.id === m.id))]
       let found = []
       if (canSeeBookings) {
         const schedules = await Promise.all(list.map((r) =>
@@ -40,7 +42,7 @@ export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Camp
             .then((slots) => slots.map((s) => ({ ...s, resourceId: r.id })))
             .catch(() => [])))
         found = schedules.flat().map((s) => {
-          const ev = events.find((e) => e.resourceId === s.resourceId && e.start === s.start && e.end === s.end)
+          const ev = events.find((e) => e.resourceId === s.resourceId && new Date(e.start).getTime() === new Date(s.start).getTime())
           return { ...s, label: ev ? ev.title : s.status === 'PENDING' ? 'Requested' : 'Booked' }
         })
       } else {
@@ -88,8 +90,10 @@ export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Camp
           <div className="ds-hours" aria-hidden="true">
             <div />
             <div className="ds-track">
-              {hours.map((h) => (
-                <span key={h} className="ds-hour" style={{ left: pct(h * 60) }}>{h <= 12 ? h : h - 12}{h < 12 ? 'am' : 'pm'}</span>
+              {hours.map((h, i) => (
+                <span key={h} className={`ds-hour${i === 0 ? ' first' : i === hours.length - 1 ? ' last' : ''}`} style={{ left: pct(h * 60) }}>
+                  {h <= 12 ? h : h - 12}{h < 12 ? 'am' : 'pm'}
+                </span>
               ))}
             </div>
           </div>
