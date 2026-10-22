@@ -76,3 +76,11 @@ button.danger { background: var(--danger); }
 .badge.COMPLETED { color: var(--accent); }
 .nav { gap: 16px; flex-wrap: wrap; }
 .nav-links { flex-wrap: wrap; row-gap: 4px; }
+
+/* Narrow screens: wide tables scroll inside their card instead of pushing the whole page sideways. */
+@media (max-width: 760px) {
+  table { display: block; overflow-x: auto; white-space: nowrap; }
+  td, th { white-space: normal; min-width: 90px; }
+  main { padding: 16px 12px; }
+  .card { padding: 16px; }
+}

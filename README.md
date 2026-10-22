@@ -79,7 +79,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Done: 64 of 64 tests pass on MongoDB Atlas; an event goes Draft to Approved and reserves its room |
 | 4. Registration | Capacity, waitlist, auto-promotion | Done: 76 of 76 tests pass on MongoDB Atlas; 30 parallel registrations fill exactly 10 seats |
 | 5. Attendance and feedback | Rotating QR, check-in, feedback, report | Done: 101 of 101 tests pass on MongoDB Atlas; a full event runs end to end |
-| 6. Reports and polish | Utilization and attendance reports, audit log page, no-show rule, demo script | Code written; needs `mvn test` with `MONGODB_URI` set |
+| 6. Reports and polish | Utilization and attendance reports, audit log page, no-show rule, demo script | Done: Phase 6 tests pass on MongoDB Atlas; reports and audit log checked on the live app |
 
 ### Verification status
 
@@ -99,8 +99,9 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 - Phase 5: `mvn test` passes 101 of 101 against MongoDB Atlas, including `RotatingCodeTest` (13), `AttendanceFlowTest` (6:
   a full event runs end to end with check-in, feedback and report; old or wrong codes rejected; only confirmed registrants;
   check-in only around the event; feedback only from attendees, once) and `AttendanceAccessTest` (6).
-- Phase 6: `UtilizationCalculatorTest` (6) passes. `NoShowAndReportFlowTest` (no-show rule; attendance and utilization
-  reports against real data) and `ReportAccessTest` were written without being compiled here, so run `mvn test` with `MONGODB_URI` set.
+- Phase 6: `UtilizationCalculatorTest` (6), `ReportAccessTest` (3) and `NoShowAndReportFlowTest` (3, on MongoDB Atlas) pass.
+  Checked on the live app: room-use figures match the bookings made earlier, and students, organizers and resource
+  admins get 403 on admin-only reports and the audit log.
 - Frontend: `npm run build` passes.
 
 ## Roles
