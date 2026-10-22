@@ -2,6 +2,7 @@ package com.campus.booking.support;
 
 import com.campus.booking.exception.ApiExceptions.ConflictException;
 import com.mongodb.MongoException;
+import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -15,7 +16,12 @@ public final class TransactionRetry {
     private TransactionRetry() {
     }
 
-    public static <T> T run(TransactionTemplate tx, int maxAttempts, Supplier<T> work) {
+    /**
+     * Retries until {@code maxWait} has passed. A time budget (not an attempt count) matters when many requests
+     * arrive at once: each has to wait for the ones ahead of it, and each turn is a round trip to the database.
+     */
+    public static <T> T run(TransactionTemplate tx, Duration maxWait, Supplier<T> work) {
+        long deadline = System.nanoTime() + maxWait.toNanos();
         for (int attempt = 1; ; attempt++) {
             try {
                 return tx.execute(status -> work.get());
@@ -23,7 +29,7 @@ public final class TransactionRetry {
                 if (!isTransient(e)) {
                     throw e;
                 }
-                if (attempt >= maxAttempts) {
+                if (System.nanoTime() > deadline) {
                     throw new ConflictException("This is busy right now. Please try again.");
                 }
                 backoff(attempt);
@@ -42,8 +48,9 @@ public final class TransactionRetry {
         return false;
     }
 
+    /** Random pause that grows with each attempt (up to 400 ms), so waiting requests spread out instead of colliding. */
     private static void backoff(int attempt) {
-        long max = Math.min(300, 15L * attempt);
+        long max = Math.min(400, 10L << Math.min(attempt, 6));
         try {
             Thread.sleep(ThreadLocalRandom.current().nextLong(5, max + 5));
         } catch (InterruptedException ie) {
