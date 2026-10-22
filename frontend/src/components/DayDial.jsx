@@ -106,7 +106,7 @@ export default function DayDial({ day, rooms, items, now }) {
   const [gx, gy] = point(OUTER + 40, OPEN)
   // The hand starts outside the centre read-out, so it never crosses the time.
   const [hx, hy] = point(OUTER + 10, nowH)
-  const [hsx, hsy] = point(INNER - 22, nowH)
+  const [hsx, hsy] = point(INNER - 10, nowH)
   const busyNow = new Set(arcs.filter((a) => a.live).map((a) => a.room)).size
 
   const describe = (a) => `${a.label}, ${a.room}, ${clock(a.s)} to ${clock(a.e)}${a.cls === 'PENDING' ? ', waiting for approval' : a.live ? ', happening now' : ''}`
