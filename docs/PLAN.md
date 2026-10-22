@@ -33,8 +33,10 @@ Every change is written to an audit log (who, when, why).
 4. Blocked periods (holidays, exams, maintenance).
 5. Access gate: training or sign-off for labs and equipment.
 
-Academic use outranks events. The overlap check and the insert run in one MongoDB transaction with an
-idempotency key, so concurrent or repeated requests cannot double-book.
+Academic use outranks events: timetabled classes are entered as blocked periods, so an event can never take their slot.
+The overlap check and the insert run in one MongoDB transaction with an idempotency key. The transaction also writes to
+the resource's own document, because two transactions that each see a free slot and insert different documents would
+otherwise both commit; the write collision forces the second one to retry and see the first booking.
 
 ## Workflow C: registration
 

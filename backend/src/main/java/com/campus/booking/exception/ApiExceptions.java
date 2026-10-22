@@ -1,5 +1,6 @@
 package com.campus.booking.exception;
 
+import com.campus.booking.booking.BookingConflictException;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,10 @@ public final class ApiExceptions {
 
     public static class NotFoundException extends RuntimeException {
         public NotFoundException(String message) { super(message); }
+    }
+
+    public static class ForbiddenException extends RuntimeException {
+        public ForbiddenException(String message) { super(message); }
     }
 
     public static class BadRequestException extends RuntimeException {
@@ -55,6 +60,19 @@ public final class ApiExceptions {
         @ExceptionHandler(BadRequestException.class)
         ResponseEntity<ErrorBody> badRequest(BadRequestException e) {
             return build(HttpStatus.BAD_REQUEST, e.getMessage(), Map.of());
+        }
+
+        @ExceptionHandler(ForbiddenException.class)
+        ResponseEntity<ErrorBody> forbidden(ForbiddenException e) {
+            return build(HttpStatus.FORBIDDEN, e.getMessage(), Map.of());
+        }
+
+        /** One entry per broken rule, keyed by rule code, so the UI can show exactly what to change. */
+        @ExceptionHandler(BookingConflictException.class)
+        ResponseEntity<ErrorBody> bookingConflict(BookingConflictException e) {
+            Map<String, String> fields = e.getViolations().stream()
+                    .collect(Collectors.toMap(v -> v.code().name(), v -> v.message(), (a, b) -> a));
+            return build(HttpStatus.CONFLICT, e.getMessage(), fields);
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)

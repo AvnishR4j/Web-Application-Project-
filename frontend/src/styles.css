@@ -57,3 +57,17 @@ a { color: var(--accent); }
 table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
 th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+
+.nav-links { display: flex; gap: 16px; flex: 1; margin-left: 24px; }
+.stack { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.badge { padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; border: 1px solid var(--border); }
+.badge.PENDING { color: #8a5a00; }
+.badge.APPROVED { color: #1b6e3a; }
+.badge.REJECTED, .badge.CANCELLED { color: var(--danger); }
+.notice { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin: 0; }
+.notice.bad { border-color: var(--danger); }
+.notice.good { border-color: #1b6e3a; }
+.notice ul { margin: 6px 0 0; padding-left: 20px; }
+button.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
+button.danger { background: var(--danger); }

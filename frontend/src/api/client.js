@@ -15,8 +15,8 @@ export class ApiError extends Error {
   }
 }
 
-export async function api(path, { method = 'GET', body } = {}) {
-  const headers = { 'Content-Type': 'application/json' }
+export async function api(path, { method = 'GET', body, headers: extra = {} } = {}) {
+  const headers = { 'Content-Type': 'application/json', ...extra }
   const token = tokenStore.get()
   if (token) headers.Authorization = `Bearer ${token}`
 
