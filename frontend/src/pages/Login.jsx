@@ -47,7 +47,7 @@ export default function Login() {
         </p>
         <p className="demo-hint">
           Trying the demo? Use <code>student@campus.test</code>, <code>organizer@</code>, <code>advisor@</code>,{' '}
-          <code>resources@</code> or <code>admin@campus.test</code> with <code>Password@123</code>.
+          <code>resources@</code> or <code>admin@campus.test</code>. Ask the team for the password.
         </p>
       </form>
     </AuthLayout>

@@ -1,5 +1,6 @@
 # One-click backend on Render: New > Blueprint > pick this repository.
-# You will be asked for MONGODB_URI (your Atlas connection string). JWT_SECRET is generated for you.
+# You will be asked for MONGODB_URI (your Atlas connection string) and DEMO_PASSWORD (the demo accounts'
+# password, kept out of the repo). JWT_SECRET is generated for you.
 services:
   - type: web
     name: campus-board-api
@@ -16,5 +17,7 @@ services:
         generateValue: true
       - key: SEED_DEMO_DATA
         value: "true"
+      - key: DEMO_PASSWORD
+        sync: false
       - key: BOOKING_ZONE
         value: Asia/Kolkata
