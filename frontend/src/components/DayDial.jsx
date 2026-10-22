@@ -98,8 +98,9 @@ export default function DayDial({ day, rooms, items, now }) {
     hours.push({ h, tx1, ty1, tx2, ty2, lx, ly, label, major: h % 3 === 0 })
   }
   const [gx, gy] = point(OUTER + 40, OPEN)
-  const [hx, hy] = point(OUTER + 8, nowH)
-  const [tlx, tly] = point(-22, nowH)
+  // The hand starts outside the centre read-out, so it never crosses the time.
+  const [hx, hy] = point(OUTER + 10, nowH)
+  const [hsx, hsy] = point(INNER - 22, nowH)
   const busyNow = new Set(arcs.filter((a) => a.live).map((a) => a.room)).size
 
   const describe = (a) => `${a.label}, ${a.room}, ${clock(a.s)} to ${clock(a.e)}${a.cls === 'PENDING' ? ', waiting for approval' : a.live ? ', happening now' : ''}`
@@ -138,9 +139,9 @@ export default function DayDial({ day, rooms, items, now }) {
         ))}
         {showHand && (
           <g aria-hidden="true">
-            <line className="d-hand-tail" x1={C} y1={C} x2={f(tlx)} y2={f(tly)} />
-            <line className="d-hand" x1={C} y1={C} x2={f(hx)} y2={f(hy)} />
-            <circle className="d-pin" cx={C} cy={C} r="5" />
+            <line className="d-hand" x1={f(hsx)} y1={f(hsy)} x2={f(hx)} y2={f(hy)} />
+            <circle className="d-pin" cx={f(hsx)} cy={f(hsy)} r="4" />
+            <circle className="d-pin" cx={f(hx)} cy={f(hy)} r="3" />
           </g>
         )}
       </svg>
