@@ -56,7 +56,7 @@ export default function MyBookings() {
                   {b.decisionReason && <div className="muted">{b.decisionReason}</div>}
                 </td>
                 <td>
-                  {(b.status === 'PENDING' || b.status === 'APPROVED') && new Date(b.start) > new Date() && (
+                  {b.eventId ? <span className="muted">Managed by its event</span> : (b.status === 'PENDING' || b.status === 'APPROVED') && new Date(b.start) > new Date() && (
                     <button className="secondary" onClick={() => cancel(b.id)}>Cancel</button>
                   )}
                 </td>

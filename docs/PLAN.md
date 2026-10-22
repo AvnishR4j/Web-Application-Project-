@@ -9,6 +9,7 @@ university, vendor or open-source system; features without evidence are parked.
 | --- | --- |
 | Student | Browse approved events, register, cancel, check in, give feedback |
 | Club organizer | Submit event and resource requests, revise them, see registrants |
+| Faculty advisor | First approval of events for the clubs they advise |
 | Resource admin | Approve or reject bookings for rooms, labs, equipment |
 | Super admin | Manage users, roles, rules, reports |
 
@@ -19,7 +20,7 @@ university, vendor or open-source system; features without evidence are parked.
 3. Advisor review: approve or reject with a reason.
 4. Space manager review: approve or reject the venue and equipment.
 5. Approved: event is published and registration opens. Hidden from students before this.
-6. Editing an approved request triggers approval again.
+6. Editing a submitted or approved request sends it back to Draft and frees the room; it needs approval again.
 7. Completed or Cancelled.
 
 States: Draft, Submitted, Advisor approved, Approved, Rejected, Cancelled, Completed.

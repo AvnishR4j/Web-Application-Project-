@@ -16,6 +16,9 @@ app:
   booking:
     # Time zone used for opening hours. Set BOOKING_ZONE to your campus zone, e.g. America/New_York.
     zone: ${BOOKING_ZONE:Asia/Kolkata}
+  events:
+    # Minimum notice for event requests, in days (plan default: 7).
+    min-lead-days: ${EVENT_MIN_LEAD_DAYS:7}
   seed-demo-data: ${SEED_DEMO_DATA:false}
 
 server:
