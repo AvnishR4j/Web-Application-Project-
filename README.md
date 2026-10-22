@@ -59,7 +59,7 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
 | --- | --- | --- |
 | 1. Foundation | Repo, replica set, auth, four roles, role-protected pages, seed data | Done: `mvn test` passes (10 of 10) |
 | 2. Resources and conflict engine | Resource catalog, five conflict checks, transactional booking | Done: 40 of 40 tests pass, including 20 parallel requests creating exactly one booking on MongoDB Atlas |
-| 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Code written; needs `mvn test` with `MONGODB_URI` set |
+| 3. Events and approvals | Event state machine, advisor then space manager approval, audit log | Done: 64 of 64 tests pass on MongoDB Atlas; an event goes Draft to Approved and reserves its room |
 | 4. Registration | Capacity, waitlist, auto-promotion | Not started |
 | 5. Attendance and feedback | Rotating QR, check-in, feedback, notifications | Not started |
 | 6. Reports and polish | Utilization report, dashboard, docs, demo script | Not started |
@@ -73,10 +73,9 @@ Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`
   repeated Idempotency-Key returns the same booking; cancelling frees the slot). `BookingConcurrencyTest` is skipped unless
   `MONGODB_URI` is set; point it at a throwaway database, because it creates and deletes its own data.
   Atlas note: the cluster's IP Access List must allow the machine running the tests.
-- Phase 3: the event state machine has 10 unit tests that pass. `EventAccessTest` (role rules) and `EventFlowTest`
-  (Draft to Approved reserves the room; 7-day notice; two events cannot hold one room; rejecting, cancelling or
-  editing frees the room; only the club's own advisor can approve) were written without being compiled here, so run
-  `mvn test` with `MONGODB_URI` set.
+- Phase 3: `mvn test` passes 64 of 64 against MongoDB Atlas, including `EventStateMachineTest` (10), `EventAccessTest` (6)
+  and `EventFlowTest` (8): Draft to Approved reserves the room; 7-day notice enforced; two events cannot hold one room;
+  rejecting, cancelling or editing frees the room; only the club's own advisor can approve; the manager cannot skip the advisor.
 - Frontend: `npm run build` passes.
 
 ## Roles
