@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError } from '../api/client'
+import DayStrip from '../components/DayStrip'
 
 const fmt = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 const toIso = (local) => new Date(local).toISOString()
@@ -8,7 +9,6 @@ export default function BookResource() {
   const [resources, setResources] = useState([])
   const [form, setForm] = useState({ resourceId: '', title: '', start: '', end: '', attendees: 1 })
   const [violations, setViolations] = useState(null) // null = not checked yet
-  const [busy, setBusy] = useState([])
   const [done, setDone] = useState(null)
   const [error, setError] = useState('')
   // One key per submit attempt: if the request is retried (double click, flaky network) it cannot book twice.
@@ -21,15 +21,6 @@ export default function BookResource() {
     }).catch((e) => setError(e.message))
   }, [])
 
-  // Show what is already taken in the next 14 days for the chosen resource.
-  useEffect(() => {
-    if (!form.resourceId) return
-    const from = new Date().toISOString()
-    const to = new Date(Date.now() + 14 * 86400000).toISOString()
-    api(`/api/bookings/schedule?resourceId=${form.resourceId}&from=${from}&to=${to}`)
-      .then(setBusy)
-      .catch(() => setBusy([]))
-  }, [form.resourceId, done])
 
   const set = (key) => (e) => {
     setForm({ ...form, [key]: e.target.value })
@@ -77,7 +68,12 @@ export default function BookResource() {
 
   return (
     <div className="card">
-      <h1>Book a room, lab or equipment</h1>
+      <div className="page-head">
+        <div>
+          <h1>Book a room</h1>
+          <p>Rooms, labs and equipment. Check first: every clash, capacity limit and closed hour is listed before you send anything.</p>
+        </div>
+      </div>
       {error && <p className="error" role="alert">{error}</p>}
       <form className="stack" onSubmit={submit}>
         <label>Resource
@@ -119,19 +115,10 @@ export default function BookResource() {
         </div>
       </form>
 
-      <h2>Already taken in the next 14 days</h2>
-      {busy.length === 0 ? <p className="muted">Nothing booked.</p> : (
-        <table>
-          <thead><tr><th>From</th><th>To</th><th>Status</th></tr></thead>
-          <tbody>
-            {busy.map((s, i) => (
-              <tr key={i}>
-                <td>{fmt(s.start)}</td><td>{fmt(s.end)}</td>
-                <td><span className={`badge ${s.status}`}>{s.status}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {form.resourceId && (
+        <div style={{ marginTop: 28 }}>
+          <DayStrip key={`${form.resourceId}-${done?.id || ''}`} canSeeBookings resourceFilter={form.resourceId} title="When this room is taken" compact />
+        </div>
       )}
     </div>
   )

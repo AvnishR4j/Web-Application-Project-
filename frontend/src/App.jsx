@@ -1,6 +1,10 @@
-import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { api } from './api/client'
 import { ROLES, useAuth } from './auth/AuthContext'
 import ProtectedRoute from './auth/ProtectedRoute'
+import Icon, { BrandMark } from './components/Icon'
+import { useTheme } from './components/theme'
 import AdminUsers from './pages/AdminUsers'
 import AuditLog from './pages/AuditLog'
 import ApprovalQueue from './pages/ApprovalQueue'
@@ -26,43 +30,128 @@ const ORGANIZERS = [ROLES.CLUB_ORGANIZER, ROLES.SUPER_ADMIN]
 const ADVISORS = [ROLES.FACULTY_ADVISOR, ROLES.SUPER_ADMIN]
 const INSIDERS = [ROLES.CLUB_ORGANIZER, ROLES.FACULTY_ADVISOR, ROLES.RESOURCE_ADMIN, ROLES.SUPER_ADMIN]
 
-function Nav() {
+const ROLE_NAME = {
+  STUDENT: 'Student',
+  CLUB_ORGANIZER: 'Club organizer',
+  FACULTY_ADVISOR: 'Faculty advisor',
+  RESOURCE_ADMIN: 'Resource admin',
+  SUPER_ADMIN: 'Super admin',
+}
+
+/** Links grouped by what each role does. Review links carry a live count of what is waiting. */
+function navFor(role, counts) {
+  const has = (list) => list.includes(role)
+  const groups = [
+    { name: 'Campus', links: [
+      { to: '/', icon: 'clock', label: 'Today', short: 'Today', end: true },
+      { to: '/events', icon: 'calendar', label: 'Events', short: 'Events' },
+      { to: '/registrations', icon: 'ticket', label: 'My tickets', short: 'Tickets' },
+      { to: '/resources', icon: 'door', label: 'Rooms and equipment', short: 'Rooms' },
+    ] },
+    { name: 'Organize', links: [
+      has(ORGANIZERS) && { to: '/my-events', icon: 'clipboard', label: 'My events', short: 'My events' },
+      has(BOOKERS) && { to: '/book', icon: 'plus', label: 'Book a room', short: 'Book' },
+      has(BOOKERS) && { to: '/bookings', icon: 'list', label: 'My bookings', short: 'Bookings' },
+    ] },
+    { name: 'Review', links: [
+      has(ADVISORS) && { to: '/advisor', icon: 'check', label: 'Advisor review', short: 'Review', count: counts.advisor },
+      has(MANAGERS) && { to: '/event-approvals', icon: 'stamp', label: 'Event approvals', short: 'Approve events', count: counts.events },
+      has(MANAGERS) && { to: '/approvals', icon: 'door', label: 'Booking approvals', short: 'Approve rooms', count: counts.bookings },
+    ] },
+    { name: 'Manage', links: [
+      has(MANAGERS) && { to: '/reports', icon: 'chart', label: 'Reports', short: 'Reports' },
+      role === ROLES.SUPER_ADMIN && { to: '/clubs', icon: 'club', label: 'Clubs', short: 'Clubs' },
+      role === ROLES.SUPER_ADMIN && { to: '/admin/users', icon: 'users', label: 'People and roles', short: 'People' },
+      role === ROLES.SUPER_ADMIN && { to: '/admin/audit', icon: 'history', label: 'Audit log', short: 'Audit' },
+    ] },
+  ]
+  return groups.map((g) => ({ ...g, links: g.links.filter(Boolean) })).filter((g) => g.links.length)
+}
+
+function useReviewCounts(role) {
+  const location = useLocation()
+  const [counts, setCounts] = useState({})
+  useEffect(() => {
+    if (!role) return
+    const jobs = []
+    if (ADVISORS.includes(role)) jobs.push(api('/api/events/advisor-queue').then((l) => ['advisor', l.length]))
+    if (MANAGERS.includes(role)) {
+      jobs.push(api('/api/events/manager-queue').then((l) => ['events', l.length]))
+      jobs.push(api('/api/bookings?status=PENDING').then((l) => ['bookings', l.filter((b) => !b.eventId).length]))
+    }
+    Promise.all(jobs.map((j) => j.catch(() => null)))
+      .then((pairs) => setCounts(Object.fromEntries(pairs.filter(Boolean))))
+  }, [role, location.pathname])
+  return counts
+}
+
+function Shell({ children }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [theme, toggleTheme] = useTheme()
+  const [open, setOpen] = useState(false)
+  const counts = useReviewCounts(user?.role)
+  useEffect(() => setOpen(false), [location.pathname])
+
+  if (!user) return <div className="app signed-out">{children}</div>
+
+  const themeButton = (
+    <button className="ghost icon" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to Day theme' : 'Switch to Night theme'}>
+      <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+      <span>{theme === 'dark' ? 'Day' : 'Night'}</span>
+    </button>
+  )
+
   return (
-    <header className="nav">
-      <Link to="/" className="brand">Campus Events and Booking</Link>
-      {user && (
-        <nav className="nav-links">
-          <Link to="/events">Events</Link>
-          <Link to="/registrations">My registrations</Link>
-          {ORGANIZERS.includes(user.role) && <Link to="/my-events">My events</Link>}
-          {ADVISORS.includes(user.role) && <Link to="/advisor">Advisor review</Link>}
-          {MANAGERS.includes(user.role) && <Link to="/event-approvals">Event approvals</Link>}
-          <Link to="/resources">Resources</Link>
-          {BOOKERS.includes(user.role) && <Link to="/book">Book</Link>}
-          {BOOKERS.includes(user.role) && <Link to="/bookings">My bookings</Link>}
-          {MANAGERS.includes(user.role) && <Link to="/approvals">Booking approvals</Link>}
-          {MANAGERS.includes(user.role) && <Link to="/reports">Reports</Link>}
-          {user.role === ROLES.SUPER_ADMIN && <Link to="/clubs">Clubs</Link>}
-          {user.role === ROLES.SUPER_ADMIN && <Link to="/admin/audit">Audit log</Link>}
-        </nav>
-      )}
-      {user && (
-        <div className="nav-right">
-          <span className="muted">{user.name}</span>
-          <button className="link" onClick={() => { logout(); navigate('/login') }}>Log out</button>
+    <div className="app">
+      <header className="topbar">
+        <Link to="/" className="brand"><BrandMark /><span className="brand-name">Campus Board</span></Link>
+        <button className="ghost icon" onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open}>
+          <Icon name="menu" /> Menu
+        </button>
+      </header>
+      {open && <div className="scrim" onClick={() => setOpen(false)} />}
+      <nav className={`rail${open ? ' open' : ''}`} aria-label="Main">
+        <div className="brand-row">
+          <Link to="/" className="brand" aria-label="Campus Board, today"><BrandMark /><span className="brand-name">Campus Board</span></Link>
+          {open && <button className="ghost" onClick={() => setOpen(false)} aria-label="Close menu"><Icon name="close" width="18" /></button>}
         </div>
-      )}
-    </header>
+        {navFor(user.role, counts).map((g) => (
+          <div key={g.name}>
+            {g.name !== 'Campus' && <div className="rail-group" role="separator"><span>{g.name}</span></div>}
+            {g.links.map((l) => (
+              <NavLink key={l.to} to={l.to} end={l.end} title={l.label} aria-label={l.label} className={({ isActive }) => `rail-link${isActive ? ' active' : ''}`}>
+                <Icon name={l.icon} />
+                <span className="rail-short">{l.short}</span>
+                <span className="rail-full">{l.label}</span>
+                {l.count > 0 && <span className="rail-count" aria-label={`${l.count} waiting`}>{l.count}</span>}
+              </NavLink>
+            ))}
+          </div>
+        ))}
+        <div className="rail-foot">
+          <span className="avatar" title={`${user.name}, ${ROLE_NAME[user.role] || user.role}`}>{user.name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</span>
+          <div className="who">
+            <strong>{user.name}</strong>
+            <span>{ROLE_NAME[user.role] || user.role}</span>
+          </div>
+          <div className="rail-actions">
+            {themeButton}
+            <button className="ghost icon" onClick={() => { logout(); navigate('/login') }}>
+              <Icon name="logout" /><span>Log out</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+      <main className="content" id="main">{children}</main>
+    </div>
   )
 }
 
 export default function App() {
   return (
-    <>
-      <Nav />
-      <main>
+    <Shell>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -107,7 +196,6 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </main>
-    </>
+    </Shell>
   )
 }

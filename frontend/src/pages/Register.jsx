@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import AuthLayout from '../components/AuthLayout'
 
 export default function Register() {
   const { register } = useAuth()
@@ -29,33 +30,35 @@ export default function Register() {
   }
 
   return (
-    <form className="card narrow" onSubmit={submit}>
-      <h1>Create a student account</h1>
-      <label>
-        Name
-        <input value={form.name} onChange={set('name')} required />
-        {fields.name && <span className="error">{fields.name}</span>}
-      </label>
-      <label>
-        Email
-        <input type="email" value={form.email} onChange={set('email')} required />
-        {fields.email && <span className="error">{fields.email}</span>}
-      </label>
-      <label>
-        Department
-        <input value={form.department} onChange={set('department')} />
-      </label>
-      <label>
-        Password (at least 8 characters)
-        <input type="password" value={form.password} onChange={set('password')} minLength={8} required />
-        {fields.password && <span className="error">{fields.password}</span>}
-      </label>
-      {error && <p className="error" role="alert">{error}</p>}
-      <button disabled={busy}>{busy ? 'Creating...' : 'Create account'}</button>
-      <p className="muted">
-        Already registered? <Link to="/login">Log in</Link>
-      </p>
-      <p className="muted">Club organizer and admin accounts are created by a super admin.</p>
-    </form>
+    <AuthLayout>
+      <form onSubmit={submit}>
+        <h2>Create a student account</h2>
+        <label>
+          Full name
+          <input autoComplete="name" value={form.name} onChange={set('name')} required />
+          {fields.name && <span className="error">{fields.name}</span>}
+        </label>
+        <label>
+          College email
+          <input type="email" autoComplete="email" value={form.email} onChange={set('email')} required />
+          {fields.email && <span className="error">{fields.email}</span>}
+        </label>
+        <label>
+          Department
+          <input value={form.department} onChange={set('department')} placeholder="For example Computer Science" />
+        </label>
+        <label>
+          Password, at least 8 characters
+          <input type="password" autoComplete="new-password" value={form.password} onChange={set('password')} minLength={8} required />
+          {fields.password && <span className="error">{fields.password}</span>}
+        </label>
+        {error && <p className="notice bad" role="alert">{error}</p>}
+        <button disabled={busy}>{busy ? 'Creating your account...' : 'Create account'}</button>
+        <p className="muted" style={{ margin: 0 }}>
+          Already registered? <Link to="/login">Log in</Link>
+        </p>
+        <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>Club organizers, faculty advisors and admins get their accounts from a super admin.</p>
+      </form>
+    </AuthLayout>
   )
 }

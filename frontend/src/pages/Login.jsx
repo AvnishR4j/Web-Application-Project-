@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import AuthLayout from '../components/AuthLayout'
 
 export default function Login() {
   const { login } = useAuth()
@@ -28,21 +29,27 @@ export default function Login() {
   }
 
   return (
-    <form className="card narrow" onSubmit={submit}>
-      <h1>Log in</h1>
-      <label>
-        Email
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      </label>
-      <label>
-        Password
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-      </label>
-      {error && <p className="error" role="alert">{error}</p>}
-      <button disabled={busy}>{busy ? 'Logging in...' : 'Log in'}</button>
-      <p className="muted">
-        New student? <Link to="/register">Create an account</Link>
-      </p>
-    </form>
+    <AuthLayout>
+      <form onSubmit={submit}>
+        <h2>Log in</h2>
+        <label>
+          College email
+          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </label>
+        <label>
+          Password
+          <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </label>
+        {error && <p className="notice bad" role="alert">{error}</p>}
+        <button disabled={busy}>{busy ? 'Logging in...' : 'Log in'}</button>
+        <p className="muted" style={{ margin: 0 }}>
+          New student? <Link to="/register">Create an account</Link>
+        </p>
+        <p className="demo-hint">
+          Trying the demo? Use <code>student@campus.test</code>, <code>organizer@</code>, <code>advisor@</code>,{' '}
+          <code>resources@</code> or <code>admin@campus.test</code> with <code>Password@123</code>.
+        </p>
+      </form>
+    </AuthLayout>
   )
 }
