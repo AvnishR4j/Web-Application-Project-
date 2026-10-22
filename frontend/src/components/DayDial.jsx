@@ -51,6 +51,12 @@ export function useDay(day, canSeeBookings) {
       } else {
         items = open.map((e) => ({ resourceId: e.resourceId, start: e.start, end: e.end, status: 'APPROVED', label: e.title }))
       }
+      // Keep only what overlaps this day (published events can be on any date).
+      {
+        const dayStart = day.getTime()
+        const dayEnd = dayStart + 86400000
+        items = items.filter((b) => new Date(b.start).getTime() < dayEnd && new Date(b.end).getTime() > dayStart)
+      }
       if (!cancelled) setState({ rooms, items, error: '' })
     }
     load().catch((e) => !cancelled && setState((s) => ({ ...s, rooms: s.rooms || [], error: e.message })))
