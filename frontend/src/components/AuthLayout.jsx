@@ -1,3 +1,4 @@
+import ClockHands from './ClockHands'
 import { BrandMark } from './Icon'
 
 const C = 280
@@ -11,10 +12,9 @@ const arc = (r, h1, h2) => {
   return `M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 ${h2 - h1 > 6 ? 1 : 0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`
 }
 
-/** Sign-in screens: a small dial above the headline on the left, the form on the right. */
+/** Sign-in screens: a small live clock above the headline on the left, the form on the right. */
 export default function AuthLayout({ children }) {
   const rings = [220, 186, 152, 118]
-  const [hx, hy] = pt(200, 15.1)
   return (
     <div className="auth">
       <section className="auth-board" aria-label="About Campus Board">
@@ -26,10 +26,7 @@ export default function AuthLayout({ children }) {
             <path className="a" d={arc(186, 14.5, 17)} stroke="#a9c2a6" strokeWidth="18" />
             <path className="a" d={arc(152, 9, 10.5)} stroke="#e3d3b0" strokeWidth="18" />
             <path className="a" d={arc(118, 16, 18.5)} stroke="#e3d3b0" strokeWidth="18" />
-            <g className="hand">
-              <line x1={C} y1={C} x2={hx.toFixed(1)} y2={hy.toFixed(1)} stroke="#e3d3b0" strokeWidth="2" strokeLinecap="round" />
-              <circle cx={C} cy={C} r="5" fill="#e3d3b0" />
-            </g>
+            <ClockHands cx={C} cy={C} hour={96} minute={196} second={226} tail={26} />
           </svg>
           <h1>Every room and every event, around the clock.</h1>
           <p>Book rooms and labs without clashes, take club events through approval, register for what is on, and check in with a code that changes every 30 seconds.</p>

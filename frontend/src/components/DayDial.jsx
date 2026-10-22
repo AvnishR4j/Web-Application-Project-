@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client'
+import ClockHands, { useLiveTime } from './ClockHands'
 
 /*
  * The Day Dial: the campus day (8am to 8pm) drawn on a real clock face, so 3pm sits at the 3.
@@ -104,9 +105,6 @@ export default function DayDial({ day, rooms, items, now }) {
     hours.push({ h, tx1, ty1, tx2, ty2, lx, ly, label, major: h % 3 === 0 })
   }
   const [gx, gy] = point(OUTER + 40, OPEN)
-  // The hand starts outside the centre read-out, so it never crosses the time.
-  const [hx, hy] = point(OUTER + 10, nowH)
-  const [hsx, hsy] = point(INNER - 10, nowH)
   const busyNow = new Set(arcs.filter((a) => a.live).map((a) => a.room)).size
 
   const describe = (a) => `${a.label}, ${a.room}, ${clock(a.s)} to ${clock(a.e)}${a.cls === 'PENDING' ? ', waiting for approval' : a.live ? ', happening now' : ''}`
@@ -143,18 +141,16 @@ export default function DayDial({ day, rooms, items, now }) {
             <title>{describe(a)}</title>
           </path>
         ))}
-        {showHand && (
-          <g aria-hidden="true">
-            <line className="d-hand" x1={f(hsx)} y1={f(hsy)} x2={f(hx)} y2={f(hy)} />
-            <circle className="d-pin" cx={f(hsx)} cy={f(hsy)} r="4" />
-            <circle className="d-pin" cx={f(hx)} cy={f(hy)} r="3" />
-          </g>
-        )}
+        {showHand && (() => {
+          const [mx, my] = point(OUTER + 24, nowH)
+          return <circle className="d-now" cx={f(mx)} cy={f(my)} r="5" aria-hidden="true" />
+        })()}
+        {isToday && <ClockHands cx={C} cy={C} hour={INNER - 8} minute={OUTER - 6} second={OUTER + 12} />}
       </svg>
-      <div className="dial-center" aria-hidden={tip ? 'true' : undefined}>
+      <div className={`dial-center${isToday ? ' live' : ''}`} aria-hidden={tip ? 'true' : undefined}>
         {isToday ? (
           <>
-            <div className="t">{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
+            <LiveDigits />
             <div className="s">{nowH < OPEN || nowH > CLOSE ? 'Rooms are closed' : busyNow === 0 ? 'Every room is free' : `${busyNow} room${busyNow > 1 ? 's' : ''} in use`}</div>
           </>
         ) : (
@@ -202,4 +198,10 @@ export function RoomsToday({ day, rooms, items, now }) {
       })}
     </div>
   )
+}
+
+/** Digital time in the face, updated every second. */
+function LiveDigits() {
+  const t = useLiveTime()
+  return <div className="t">{t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</div>
 }
