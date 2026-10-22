@@ -37,8 +37,9 @@ export function useDay(day, canSeeBookings) {
     const from = day.toISOString()
     const to = new Date(day.getTime() + 86400000).toISOString()
     async function load() {
-      const rooms = await api('/api/resources')
-      const [open, mine] = await Promise.all([api('/api/events').catch(() => []), api('/api/events/mine').catch(() => [])])
+      // Rooms and events load together; only the per-room schedules wait for the room list.
+      const [rooms, open, mine] = await Promise.all([api('/api/resources'),
+        api('/api/events').catch(() => []), api('/api/events/mine').catch(() => [])])
       const events = [...open, ...mine.filter((m) => !open.some((o) => o.id === m.id))]
       let items
       if (canSeeBookings) {

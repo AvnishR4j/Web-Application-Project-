@@ -18,8 +18,13 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
@@ -211,29 +216,78 @@ public class RegistrationService {
 
     // ----- reading -----
 
+    /**
+     * Seat counts for many events with one query: every confirmed or waitlisted registration for these events is
+     * read once and counted here, rather than three queries per event.
+     */
     public List<SeatSummary> summaries(List<Event> list, Requester who) {
-        List<SeatSummary> out = new ArrayList<>();
+        if (list.isEmpty()) {
+            return List.of();
+        }
+        List<String> ids = list.stream().map(Event::getId).toList();
+        Map<String, List<Registration>> byEvent = registrations
+                .findByEventIdInAndStatusIn(ids, List.of(RegistrationStatus.CONFIRMED, RegistrationStatus.WAITLISTED))
+                .stream().collect(Collectors.groupingBy(Registration::getEventId));
+        List<SeatSummary> out = new ArrayList<>(list.size());
         for (Event e : list) {
-            long confirmed = registrations.countByEventIdAndStatus(e.getId(), RegistrationStatus.CONFIRMED);
-            long waitlisted = registrations.countByEventIdAndStatus(e.getId(), RegistrationStatus.WAITLISTED);
-            Optional<Registration> mine = registrations.findByEventIdAndUserEmail(e.getId(), who.email());
-            RegistrationStatus myStatus = mine.map(Registration::getStatus).orElse(null);
-            Integer position = myStatus == RegistrationStatus.WAITLISTED ? waitlistPosition(mine.get()) : null;
-            out.add(new SeatSummary(e.getId(), e.getExpectedAttendees(), confirmed, waitlisted, myStatus, position));
+            List<Registration> regs = byEvent.getOrDefault(e.getId(), List.of());
+            long confirmed = regs.stream().filter(r -> r.getStatus() == RegistrationStatus.CONFIRMED).count();
+            List<Registration> queue = waitlistOrder(regs);
+            Registration mine = regs.stream().filter(r -> who.email().equals(r.getUserEmail())).findFirst().orElse(null);
+            RegistrationStatus myStatus = mine == null ? null : mine.getStatus();
+            Integer position = myStatus == RegistrationStatus.WAITLISTED ? positionIn(queue, mine) : null;
+            out.add(new SeatSummary(e.getId(), e.getExpectedAttendees(), confirmed, queue.size(), myStatus, position));
         }
         return out;
     }
 
+    /** The viewer's tickets with a fixed number of queries, however many tickets they hold. */
     public List<MyRegistration> mine(Requester who) {
-        List<MyRegistration> out = new ArrayList<>();
-        for (Registration r : registrations.findByUserEmailOrderByCreatedAtDesc(who.email())) {
-            events.findById(r.getEventId()).ifPresent(e -> out.add(new MyRegistration(r, e.getTitle(), e.getStart(),
-                    e.getEnd(), e.getStatus(),
-                    r.getStatus() == RegistrationStatus.WAITLISTED ? waitlistPosition(r) : null,
-                    attendance.existsByEventIdAndUserEmail(r.getEventId(), who.email()),
-                    feedback.existsByEventIdAndUserEmail(r.getEventId(), who.email()))));
+        List<Registration> regs = registrations.findByUserEmailOrderByCreatedAtDesc(who.email());
+        if (regs.isEmpty()) {
+            return List.of();
+        }
+        Set<String> eventIds = regs.stream().map(Registration::getEventId).collect(Collectors.toSet());
+        Map<String, Event> eventsById = new HashMap<>();
+        events.findAllById(eventIds).forEach(e -> eventsById.put(e.getId(), e));
+        Set<String> attended = attendance.findByUserEmail(who.email()).stream()
+                .map(a -> a.getEventId()).collect(Collectors.toSet());
+        Set<String> reviewed = feedback.findByUserEmail(who.email()).stream()
+                .map(f -> f.getEventId()).collect(Collectors.toSet());
+        List<String> waitlistedEvents = regs.stream().filter(r -> r.getStatus() == RegistrationStatus.WAITLISTED)
+                .map(Registration::getEventId).distinct().toList();
+        Map<String, List<Registration>> queues = waitlistedEvents.isEmpty() ? Map.of() : registrations
+                .findByEventIdInAndStatusIn(waitlistedEvents, List.of(RegistrationStatus.WAITLISTED))
+                .stream().collect(Collectors.groupingBy(Registration::getEventId));
+        List<MyRegistration> out = new ArrayList<>(regs.size());
+        for (Registration r : regs) {
+            Event e = eventsById.get(r.getEventId());
+            if (e == null) {
+                continue;
+            }
+            Integer position = r.getStatus() == RegistrationStatus.WAITLISTED
+                    ? positionIn(waitlistOrder(queues.getOrDefault(r.getEventId(), List.of())), r) : null;
+            out.add(new MyRegistration(r, e.getTitle(), e.getStart(), e.getEnd(), e.getStatus(), position,
+                    attended.contains(r.getEventId()), reviewed.contains(r.getEventId())));
         }
         return out;
+    }
+
+    /** Waitlisted registrations in queue order: earliest waitlistedAt first, ties broken by insertion order. */
+    private static List<Registration> waitlistOrder(List<Registration> regs) {
+        return regs.stream().filter(r -> r.getStatus() == RegistrationStatus.WAITLISTED)
+                .sorted(Comparator.comparing(Registration::getWaitlistedAt, Comparator.nullsLast(Comparator.<Instant>naturalOrder()))
+                        .thenComparing(Registration::getId))
+                .toList();
+    }
+
+    private static int positionIn(List<Registration> queue, Registration r) {
+        for (int i = 0; i < queue.size(); i++) {
+            if (queue.get(i).getId().equals(r.getId())) {
+                return i + 1;
+            }
+        }
+        return queue.size();
     }
 
     /** For the club's organizers, its advisor and admins (access is checked by the caller). */

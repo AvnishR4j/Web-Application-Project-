@@ -12,7 +12,7 @@ export default function CheckinScreen() {
   const [secondsLeft, setSecondsLeft] = useState(0)
 
   const refresh = useCallback(() => {
-    api(`/api/events/${id}/checkin-code`)
+    api(`/api/events/${id}/checkin-code`, { fresh: true })
       .then(async (d) => {
         setData(d); setError('')
         const url = `${window.location.origin}/checkin/${id}?code=${d.code}`

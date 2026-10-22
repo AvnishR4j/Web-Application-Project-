@@ -1,0 +1,32 @@
+# Compiles the backend and runs every test, including the database flow tests, against a throwaway
+# MongoDB replica set. Runs on pull requests and on pushes to main that touch the backend.
+name: Backend tests
+
+on:
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["backend/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Start MongoDB (single-node replica set, needed for transactions)
+        uses: supercharge/mongodb-github-action@1.11.0
+        with:
+          mongodb-version: "7.0"
+          mongodb-replica-set: rs0
+      - name: Run tests
+        working-directory: backend
+        env:
+          MONGODB_URI: mongodb://localhost:27017/campus_ci?replicaSet=rs0
+        run: mvn -B test

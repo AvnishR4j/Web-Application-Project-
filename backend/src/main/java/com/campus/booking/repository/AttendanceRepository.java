@@ -10,5 +10,7 @@ public interface AttendanceRepository extends MongoRepository<Attendance, String
     boolean existsByEventIdAndUserEmail(String eventId, String userEmail);
     long countByEventId(String eventId);
     List<Attendance> findByEventIdOrderByCheckedInAtAsc(String eventId);
+    List<Attendance> findByUserEmail(String userEmail);
+
     void deleteByEventId(String eventId);
 }
