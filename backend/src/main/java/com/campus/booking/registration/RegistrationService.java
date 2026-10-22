@@ -12,6 +12,7 @@ import com.campus.booking.repository.EventRepository;
 import com.campus.booking.repository.RegistrationRepository;
 import com.campus.booking.support.TransactionRetry;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 public class RegistrationService {
 
-    private static final int MAX_ATTEMPTS = 25;
+    /** How long a request may wait its turn when many students register for the same event at once. */
+    private static final Duration MAX_WAIT = Duration.ofSeconds(30);
 
     public record SeatSummary(String eventId, int capacity, long confirmed, long waitlisted,
                               RegistrationStatus myStatus, Integer myWaitlistPosition) {
@@ -67,7 +69,7 @@ public class RegistrationService {
     /** Registering twice returns the existing place; re-registering after cancelling joins the back of the queue. */
     public Registration register(String eventId, Requester who) {
         try {
-            return TransactionRetry.run(tx, MAX_ATTEMPTS, () -> registerInTransaction(eventId, who));
+            return TransactionRetry.run(tx, MAX_WAIT, () -> registerInTransaction(eventId, who));
         } catch (DuplicateKeyException duplicate) {
             // Two first-time requests from the same student raced; the other one created the record.
             return registrations.findByEventIdAndUserEmail(eventId, who.email()).orElseThrow(() -> duplicate);
@@ -108,7 +110,7 @@ public class RegistrationService {
 
     /** Cancels the caller's own place. If it was a confirmed seat, the head of the waitlist moves up. */
     public Registration cancel(String eventId, Requester who) {
-        return TransactionRetry.run(tx, MAX_ATTEMPTS, () -> {
+        return TransactionRetry.run(tx, MAX_WAIT, () -> {
             lockEvent(eventId);
             Registration r = registrations.findByEventIdAndUserEmail(eventId, who.email())
                     .orElseThrow(() -> new NotFoundException("You are not registered for this event"));
@@ -133,7 +135,7 @@ public class RegistrationService {
 
     /** Called when an event is (re)approved, in case its seat count went up while waitlisted students waited. */
     public void fillFromWaitlist(String eventId) {
-        TransactionRetry.run(tx, MAX_ATTEMPTS, () -> {
+        TransactionRetry.run(tx, MAX_WAIT, () -> {
             lockEvent(eventId);
             Event event = requireEvent(eventId);
             if (event.getStatus() == EventStatus.APPROVED) {
