@@ -10,6 +10,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import MyBookings from './pages/MyBookings'
 import MyEvents from './pages/MyEvents'
+import MyRegistrations from './pages/MyRegistrations'
 import Register from './pages/Register'
 import Resources from './pages/Resources'
 import ReviewQueue from './pages/ReviewQueue'
@@ -28,6 +29,7 @@ function Nav() {
       {user && (
         <nav className="nav-links">
           <Link to="/events">Events</Link>
+          <Link to="/registrations">My registrations</Link>
           {ORGANIZERS.includes(user.role) && <Link to="/my-events">My events</Link>}
           {ADVISORS.includes(user.role) && <Link to="/advisor">Advisor review</Link>}
           {MANAGERS.includes(user.role) && <Link to="/event-approvals">Event approvals</Link>}
@@ -62,6 +64,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/resources" element={<Resources />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/registrations" element={<MyRegistrations />} />
           </Route>
           <Route element={<ProtectedRoute allow={ORGANIZERS} />}>
             <Route path="/my-events" element={<MyEvents />} />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import EventHistory from './EventHistory'
+import EventRegistrations from './EventRegistrations'
 import { STATUS_LABEL, byId, describeError, fmt } from './eventUtils'
 
 const toLocal = (iso) => {
@@ -21,6 +22,7 @@ export default function MyEvents() {
   const [error, setError] = useState('')
   const [note, setNote] = useState('')
   const [historyFor, setHistoryFor] = useState(null)
+  const [registrationsFor, setRegistrationsFor] = useState(null)
   const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(() => {
@@ -92,6 +94,9 @@ export default function MyEvents() {
                   {EDITABLE.includes(ev.status) && <button className="secondary" onClick={() => startEdit(ev)}>Edit</button>}
                   {CANCELLABLE.includes(ev.status) && <button className="link" onClick={() => act(ev.id, 'cancel', {})}>Cancel</button>}
                   <button className="link" onClick={() => setHistoryFor(historyFor === ev.id ? null : ev.id)}>History</button>
+                  {['APPROVED', 'COMPLETED'].includes(ev.status) && (
+                    <button className="link" onClick={() => setRegistrationsFor(registrationsFor === ev.id ? null : ev.id)}>Registrations</button>
+                  )}
                 </div>
               </td>
             </tr>
@@ -99,6 +104,7 @@ export default function MyEvents() {
         </tbody>
       </table>
       {historyFor && <EventHistory eventId={historyFor} />}
+      {registrationsFor && <EventRegistrations eventId={registrationsFor} />}
 
       <form className="stack" onSubmit={save}>
         <h2>{editing ? `Edit "${editing.title}"` : 'New event request'}</h2>
@@ -115,7 +121,7 @@ export default function MyEvents() {
               {rooms.map((r) => <option key={r.id} value={r.id}>{r.name} ({r.type})</option>)}
             </select>
           </label>
-          <label>Expected attendees<input type="number" min="1" value={form.expectedAttendees} onChange={set('expectedAttendees')} required /></label>
+          <label>Seats (expected attendees)<input type="number" min="1" value={form.expectedAttendees} onChange={set('expectedAttendees')} required /></label>
         </div>
         <label>Title<input value={form.title} onChange={set('title')} maxLength={160} required /></label>
         <label>Description<input value={form.description} onChange={set('description')} maxLength={2000} /></label>

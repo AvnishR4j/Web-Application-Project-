@@ -47,6 +47,8 @@ public class DemoDataSeeder implements CommandLineRunner {
             return;
         }
         seed("Demo Student", "student@campus.test", Role.STUDENT, "Computer Science");
+        seed("Demo Student Two", "student2@campus.test", Role.STUDENT, "Electronics");
+        seed("Demo Student Three", "student3@campus.test", Role.STUDENT, "Mechanical");
         seed("Demo Organizer", "organizer@campus.test", Role.CLUB_ORGANIZER, "Computer Science");
         seed("Demo Faculty Advisor", "advisor@campus.test", Role.FACULTY_ADVISOR, "Computer Science");
         seed("Demo Resource Admin", "resources@campus.test", Role.RESOURCE_ADMIN, "Facilities");
