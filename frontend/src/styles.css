@@ -480,10 +480,8 @@ td .muted { font-size: 0.88rem; }
   .auth-dial .a:nth-of-type(2) { animation-delay: 0.15s; }
   .auth-dial .a:nth-of-type(3) { animation-delay: 0.3s; }
   .auth-dial .a:nth-of-type(4) { animation-delay: 0.45s; }
-  .auth-dial .hand { transform-origin: 280px 280px; animation: tick 1.6s cubic-bezier(.2, .7, .2, 1) both; }
 }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-@keyframes tick { from { transform: rotate(-70deg); opacity: 0; } to { transform: none; opacity: 1; } }
 
 .auth-form { display: flex; align-items: center; justify-content: center; padding: 40px 20px; background: var(--bg); }
 .auth-form form { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; }
@@ -523,3 +521,19 @@ code { font-family: ui-monospace, Menlo, monospace; background: var(--surface-2)
   .rail-short { display: none; }
   .rail-full { display: inline; }
 }
+
+/* ---------- Live clock hands ---------- */
+
+.hands .h-hour { stroke: var(--sand); stroke-width: 7; stroke-linecap: round; }
+.hands .h-min { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.hands .h-sec { stroke: var(--sage-fill); stroke-width: 1.6; stroke-linecap: round; }
+.hands .h-sec-dot { fill: var(--sage-fill); }
+.hands .h-cap { fill: var(--surface); stroke: var(--sand); stroke-width: 2.5; }
+.hands .h-cap-in { fill: var(--sage-fill); }
+.hands { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); }
+.dial .d-now { fill: var(--sage-fill); }
+.dial-center.live { align-content: space-between; padding: 37% 0 36%; }
+.dial-center.live .t { font-size: clamp(1.15rem, 0.9rem + 0.8vw, 1.5rem); font-weight: 400; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.dial-center.live .s { margin-top: 0; font-size: 0.86rem; }
+.auth-dial .hands .h-min { stroke: #ece8de; }
+.auth-dial .hands .h-cap { fill: #191c1f; }
