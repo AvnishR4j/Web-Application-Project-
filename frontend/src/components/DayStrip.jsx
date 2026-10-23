@@ -34,7 +34,7 @@ const range = (s, e) => {
 export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Campus today', compact = false, selection, onPick }) {
   const [day, setDay] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d })
   const [rooms, setRooms] = useState(null)
-  const [blocks, setBlocks] = useState([])
+  const [loaded, setLoaded] = useState({ day: null, blocks: [] }) // bookings, and the day they were loaded for
   const [error, setError] = useState('')
   const [now, setNow] = useState(new Date())
 
@@ -78,7 +78,7 @@ export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Camp
         found = events.filter((e) => list.some((r) => r.id === e.resourceId))
           .map((e) => ({ resourceId: e.resourceId, start: e.start, end: e.end, status: 'APPROVED', label: e.title }))
       }
-      if (!cancelled) { setRooms(list); setBlocks(found) }
+      if (!cancelled) { setRooms(list); setLoaded({ day: day.getTime(), blocks: found }) }
     }
     load().catch((e) => !cancelled && setError(e.message))
     return () => { cancelled = true }
@@ -90,7 +90,13 @@ export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Camp
   const hours = useMemo(() => Array.from({ length: LAST_HOUR - FIRST_HOUR + 1 }, (_, i) => FIRST_HOUR + i), [])
   const move = (n) => setDay((d) => new Date(d.getTime() + n * 86400000))
 
-  const dayBlocks = (roomId) => blocks.filter((b) => b.resourceId === roomId).map((b) => {
+  // Only bookings loaded for the day on screen: while another day loads, nothing stale is drawn.
+  const blocks = loaded.day === day.getTime() ? loaded.blocks : []
+  const loading = rooms && loaded.day !== day.getTime()
+  const dayStart = day.getTime()
+  const dayEnd = dayStart + 86400000
+  const dayBlocks = (roomId) => blocks.filter((b) => b.resourceId === roomId
+    && new Date(b.start).getTime() < dayEnd && new Date(b.end).getTime() > dayStart).map((b) => {
     const s = new Date(b.start)
     const e = new Date(b.end)
     const startM = sameDay(s, day) ? minutesOfDay(s) : 0
@@ -137,7 +143,7 @@ export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Camp
       </div>
       {error && <p className="error" style={{ padding: '12px 18px', margin: 0 }}>{error}</p>}
       <div className="daystrip-scroll">
-        <div className="daystrip-grid">
+        <div className={`daystrip-grid${loading ? ' loading' : ''}`} aria-busy={loading || undefined}>
           <div className="ds-hours" aria-hidden="true">
             <div />
             <div className="ds-track">
@@ -222,7 +228,7 @@ export default function DayStrip({ canSeeBookings, resourceFilter, title = 'Camp
           {selection && <span><i className="k-sel" />Your request</span>}
         </div>
         {onPick && <span className="muted">Click a free spot to fill in the time.</span>}
-        {rooms && visibleCount === 0 && <span className="muted">{canSeeBookings ? 'Every room is free between 8am and 8pm.' : 'No events on this day.'}</span>}
+        {rooms && !loading && visibleCount === 0 && <span className="muted">{canSeeBookings ? 'Every room is free between 8am and 8pm.' : 'No events on this day.'}</span>}
       </div>
     </section>
   )
