@@ -385,23 +385,54 @@ td .muted { font-size: 0.88rem; }
 .daystrip-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 18px; border-bottom: 1px solid var(--line); }
 .daystrip-head h2 { margin: 0; font-size: 1.1rem; }
 .daystrip-scroll { overflow-x: auto; }
-.daystrip-grid { min-width: 760px; position: relative; padding-right: 22px; }
+.daystrip-grid { min-width: 900px; position: relative; padding-right: 22px; }
 .ds-hours, .ds-row { display: grid; grid-template-columns: var(--label) 1fr; }
 .ds-hours { border-bottom: 1px solid var(--line); }
 .ds-hours .ds-track { position: relative; height: 30px; background-image: none; }
 .ds-hour { position: absolute; top: 7px; transform: translateX(-50%); font-size: 0.76rem; color: var(--muted); font-weight: 600; }
-.ds-row { border-bottom: 1px solid var(--line); min-height: 58px; }
+.ds-row { border-bottom: 1px solid var(--line); min-height: 68px; }
 .ds-row:last-child { border-bottom: 0; }
 .ds-label { padding: 10px 14px; border-right: 1px solid var(--line); display: flex; flex-direction: column; justify-content: center; }
 .ds-label strong { font-size: 0.93rem; line-height: 1.2; }
 .ds-label span { font-size: 0.78rem; color: var(--muted); }
-.ds-track { position: relative; background-image: linear-gradient(to right, var(--line) 1px, transparent 1px); background-size: calc(100% / 12) 100%; }
+.ds-track {
+  position: relative;
+  /* Hour lines, plus fainter half-hour lines, so a block's edges can be read against the scale. */
+  background-image:
+    linear-gradient(to right, var(--line-strong) 1px, transparent 1px),
+    linear-gradient(to right, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px);
+  background-size: calc(100% / 12) 100%, calc(100% / 24) 100%;
+}
+.ds-track.pickable { cursor: crosshair; }
+.ds-tick { position: absolute; bottom: 0; height: 6px; border-left: 1px solid var(--line-strong); }
+.ds-hover-time {
+  position: absolute; top: 4px; transform: translateX(-50%); z-index: 3; white-space: nowrap;
+  font-size: 0.74rem; font-weight: 700; color: var(--bg); background: var(--ink); padding: 2px 6px; border-radius: 6px;
+}
+.ds-cursor { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--ink-soft); pointer-events: none; z-index: 2; }
+.ds-sel {
+  position: absolute; top: 6px; bottom: 6px; border-radius: 8px; border: 2px dashed var(--sage); z-index: 1;
+  background: color-mix(in srgb, var(--sage) 8%, transparent); pointer-events: none;
+  display: flex; align-items: flex-end; padding: 2px 6px; overflow: hidden;
+}
+.ds-sel span { font-size: 0.68rem; font-weight: 700; color: var(--sage); white-space: nowrap; }
+.ds-sel.clash { border-color: var(--red); background: color-mix(in srgb, var(--red) 8%, transparent); }
+.ds-sel.clash span { color: var(--red); }
+.ds-list { list-style: none; margin: 0; padding: 4px 18px 10px; border-top: 1px solid var(--line); }
+.ds-list li { display: grid; grid-template-columns: minmax(150px, auto) 1fr auto; gap: 14px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.ds-list li:last-child { border-bottom: 0; }
+.ds-list .when { font-weight: 700; white-space: nowrap; }
+.ds-list .what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 560px) { .ds-list li { grid-template-columns: 1fr auto; } .ds-list .what { grid-column: 1 / -1; grid-row: 2; } }
 .ds-closed { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--line-strong) 45%, transparent) 6px 7px); }
 .ds-block {
-  position: absolute; top: 12px; bottom: 12px; border-radius: 99px; padding: 4px 12px;
-  overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 0.8rem; font-weight: 700; line-height: 1.25;
-  display: flex; align-items: center;
+  position: absolute; top: 9px; bottom: 9px; border-radius: 8px; padding: 4px 8px; z-index: 1;
+  overflow: hidden; white-space: nowrap; line-height: 1.2;
+  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  border-left: 3px solid color-mix(in srgb, var(--on-sand) 45%, transparent);
 }
+.ds-block strong { font-size: 0.78rem; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+.ds-block span { font-size: 0.7rem; font-weight: 600; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; }
 .ds-block.APPROVED { background: var(--sand-fill); color: var(--on-sand); }
 .ds-block.PENDING { background: transparent; color: var(--sand); box-shadow: inset 0 0 0 1.5px var(--sand); border: 0; }
 .ds-now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--sage-fill); z-index: 2; pointer-events: none; }
@@ -413,6 +444,7 @@ td .muted { font-size: 0.88rem; }
 .ds-legend i { display: inline-block; width: 22px; height: 9px; border-radius: 99px; margin-right: 6px; vertical-align: middle; }
 .ds-legend .k-approved { background: var(--sand-fill); }
 .ds-legend .k-pending { box-shadow: inset 0 0 0 1.5px var(--sand); }
+.ds-legend .k-sel { border: 1.5px dashed var(--sage); background: color-mix(in srgb, var(--sage) 14%, transparent); }
 .ds-legend .k-closed { background: repeating-linear-gradient(135deg, transparent 0 3px, var(--line-strong) 3px 4px); }
 
 /* ---------- Event tickets ---------- */
