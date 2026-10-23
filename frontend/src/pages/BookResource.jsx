@@ -4,6 +4,8 @@ import DayStrip from '../components/DayStrip'
 
 const fmt = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 const toIso = (local) => new Date(local).toISOString()
+const pad = (n) => String(n).padStart(2, '0')
+const toLocalInput = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 
 export default function BookResource() {
   const [resources, setResources] = useState([])
@@ -117,7 +119,13 @@ export default function BookResource() {
 
       {form.resourceId && (
         <div style={{ marginTop: 28 }}>
-          <DayStrip key={`${form.resourceId}-${done?.id || ''}`} canSeeBookings resourceFilter={form.resourceId} title="When this room is taken" compact />
+          <DayStrip key={`${form.resourceId}-${done?.id || ''}`} canSeeBookings resourceFilter={form.resourceId} title="When this room is taken" compact
+            selection={form.start && form.end ? { start: new Date(form.start), end: new Date(form.end) } : null}
+            onPick={(start, end) => {
+              setForm((f) => ({ ...f, start: toLocalInput(start), end: toLocalInput(end) }))
+              setViolations(null)
+              setDone(null)
+            }} />
         </div>
       )}
     </div>
