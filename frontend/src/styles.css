@@ -573,4 +573,17 @@ code { font-family: ui-monospace, Menlo, monospace; background: var(--surface-2)
 .auth-dial .hands .h-min { stroke: #ece8de; }
 .auth-dial .hands .h-cap { fill: #191c1f; }
 
-.google-signin { display: grid; gap: 8px; justify-items: start; }
+
+.google-signin { display: grid; gap: 8px; }
+.google-btn {
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 12px;
+  height: 48px; border-radius: var(--radius-m); border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--ink); font-weight: 600; transition: background 0.15s, border-color 0.15s;
+}
+.google-btn:hover { background: var(--surface-2); }
+.google-btn:focus-within { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+.google-overlay { position: absolute; inset: 0; opacity: 0.01; overflow: hidden; border-radius: var(--radius-m); cursor: pointer; display: flex; justify-content: center; align-items: center; color-scheme: light; }
+.google-overlay iframe { height: 48px !important; }
+.google-note { margin: 0; text-align: center; font-size: 0.84rem; color: var(--muted); }
+.or-divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.86rem; }
+.or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }

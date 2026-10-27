@@ -41,7 +41,7 @@ export default function Login() {
         {config?.googleClientId && (
           <>
             <GoogleButton clientId={config.googleClientId} domains={config.googleDomains} onDone={arrived} onError={setError} />
-            <p className="muted" style={{ margin: 0, textAlign: 'center' }}>or use a password</p>
+            <div className="or-divider"><span>or use a password</span></div>
           </>
         )}
         <label>
