@@ -53,13 +53,14 @@ export default function GoogleButton({ clientId, domains = [], onDone, onError }
             }
           },
         })
-        const dark = document.documentElement.dataset.theme === 'dark'
+        // Google draws its own button inside an iframe we cannot style, so it is laid invisibly over our own
+        // button: ours is what people see, Google's is what receives the click.
         window.google.accounts.id.renderButton(box.current, {
-          theme: dark ? 'filled_black' : 'outline',
+          theme: 'outline',
           size: 'large',
           text: 'continue_with',
           shape: 'rectangular',
-          width: Math.min(320, box.current.parentElement?.clientWidth || 320),
+          width: Math.min(400, box.current.parentElement?.clientWidth || 320),
         })
       })
       .catch((err) => onError(err.message))
@@ -69,8 +70,17 @@ export default function GoogleButton({ clientId, domains = [], onDone, onError }
   if (!clientId) return null
   return (
     <div className="google-signin">
-      <div ref={box} />
-      {domains.length > 0 && <p className="muted" style={{ margin: 0 }}>Use your @{domains.join(' / @')} account.</p>}
+      <div className="google-btn">
+        <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/>
+          <path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.6l7.9-6.1z"/>
+          <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.2 1.4-4.9 2.3-8.2 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>
+        </svg>
+        <span>Continue with Google</span>
+        <div ref={box} className="google-overlay" />
+      </div>
+      {domains.length > 0 && <p className="google-note">College accounts only: @{domains.join(', @')}</p>}
     </div>
   )
 }
