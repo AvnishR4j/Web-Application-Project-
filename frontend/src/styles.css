@@ -656,3 +656,8 @@ code { font-family: ui-monospace, Menlo, monospace; background: var(--surface-2)
 }
 .or-divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; }
 .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+/* Keep the card's top edge still: it grows downward when switching sides, so the switch never moves under the cursor. */
+@media (min-width: 861px) {
+  .auth-form:has(.signin-card) { align-items: flex-start; padding-top: max(40px, calc(50vh - 260px)); }
+}
