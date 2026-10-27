@@ -45,6 +45,8 @@ public class Event {
     private Instant managerDecisionAt;
     private String rejectionReason;
     private String cancellationReason;
+    /** Set once the day-before reminder has gone out, so it is sent only once. */
+    private Instant reminderSentAt;
 
     public Event() {
     }
@@ -92,5 +94,7 @@ public class Event {
     public String getRejectionReason() { return rejectionReason; }
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public String getCancellationReason() { return cancellationReason; }
+    public Instant getReminderSentAt() { return reminderSentAt; }
+    public void setReminderSentAt(Instant reminderSentAt) { this.reminderSentAt = reminderSentAt; }
     public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
 }

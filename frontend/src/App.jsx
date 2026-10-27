@@ -19,7 +19,10 @@ import Login from './pages/Login'
 import MyBookings from './pages/MyBookings'
 import MyEvents from './pages/MyEvents'
 import MyRegistrations from './pages/MyRegistrations'
+import ForgotPassword from './pages/ForgotPassword'
 import Privacy from './pages/Privacy'
+import ResetPassword from './pages/ResetPassword'
+import Unsubscribe from './pages/Unsubscribe'
 import Register from './pages/Register'
 import Reports from './pages/Reports'
 import Resources from './pages/Resources'
@@ -157,6 +160,9 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Home />} />
           </Route>

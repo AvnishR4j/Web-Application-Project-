@@ -30,5 +30,10 @@ services:
       # Set to "false" once Google sign-in works, so nobody can create a password account.
       - key: PASSWORD_SIGNUP_ENABLED
         value: "true"
+      # Email (sign-in codes, password reset, notifications). Create a free Brevo account, verify a sender, paste both.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
       - key: BOOKING_ZONE
         value: Asia/Kolkata

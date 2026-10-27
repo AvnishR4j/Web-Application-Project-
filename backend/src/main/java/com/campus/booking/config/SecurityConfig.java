@@ -48,7 +48,7 @@ public class SecurityConfig {
                 // Spring forwards refused requests to /error. Without this, a logged-in user who is not allowed
                 // (should be 403) got 401, because the error page itself required login.
                 .requestMatchers("/error").permitAll()
-                .requestMatchers("/api/auth/**", "/api/health").permitAll()
+                .requestMatchers("/api/auth/**", "/api/health", "/api/mail/preferences").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                 // Catalog, blocked periods and training: managed by resource admins (and super admins).
                 .requestMatchers(HttpMethod.POST, "/api/resources").hasAnyRole("RESOURCE_ADMIN", "SUPER_ADMIN")

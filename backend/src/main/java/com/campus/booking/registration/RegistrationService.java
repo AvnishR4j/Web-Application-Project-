@@ -26,7 +26,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
+import com.campus.booking.mail.MailEvents.RegistrationChanged;
+import com.campus.booking.mail.MailEvents.Seat;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -74,12 +77,15 @@ public class RegistrationService {
     private final Clock clock;
     private final int noShowLimit;
     private final int noShowWindowDays;
+    private final ApplicationEventPublisher publisher;
 
     public RegistrationService(RegistrationRepository registrations, EventRepository events,
                                AttendanceRepository attendance, FeedbackRepository feedback, MongoTemplate mongo,
                                MongoTransactionManager txManager, Clock clock,
                                @Value("${app.noshow.limit}") int noShowLimit,
-                               @Value("${app.noshow.window-days}") int noShowWindowDays) {
+                               @Value("${app.noshow.window-days}") int noShowWindowDays,
+                               ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
         this.registrations = registrations;
         this.events = events;
         this.attendance = attendance;
@@ -136,7 +142,11 @@ public class RegistrationService {
             r.setWaitlistedAt(now);
             r.setConfirmedAt(null);
         }
-        return registrations.save(r);
+        Registration saved = registrations.save(r);
+        // Emailed only if this transaction commits.
+        publisher.publishEvent(new RegistrationChanged(eventId, who.email(),
+                saved.getStatus() == RegistrationStatus.CONFIRMED ? Seat.CONFIRMED : Seat.WAITLISTED));
+        return saved;
     }
 
     /** Cancels the caller's own place. If it was a confirmed seat, the head of the waitlist moves up. */
@@ -190,6 +200,7 @@ public class RegistrationService {
             r.setPromoted(true);
             r.setConfirmedAt(now);
             registrations.save(r);
+            publisher.publishEvent(new RegistrationChanged(event.getId(), r.getUserEmail(), Seat.PROMOTED));
             confirmed++;
         }
     }

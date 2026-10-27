@@ -33,6 +33,11 @@ jobs:
       - name: Summarise test results
         if: always()
         run: |
+          # One annotation for everything (GitHub shows only the first 10 per step).
+          summary=""
           for f in backend/target/surefire-reports/*.txt; do
-            echo "::notice title=$(basename "$f" .txt)::$(grep -h 'Tests run' "$f")"
+            line=$(grep -h 'Tests run' "$f" | sed 's/, Time elapsed.*//')
+            summary="$summary$(basename "$f" .txt | sed 's/com.campus.booking.//'): $line%0A"
           done
+          echo "::notice title=Test results::$summary"
+

@@ -49,6 +49,19 @@ public final class AuthDtos {
     }
 
     /** What the sign-in pages need to know: whether to offer Google, and whether passwords can create accounts. */
-    public record AuthConfig(String googleClientId, java.util.List<String> googleDomains, boolean passwordSignup) {
+    public record AuthConfig(String googleClientId, java.util.List<String> googleDomains, boolean passwordSignup,
+                             boolean emailCode, boolean passwordReset) {
+    }
+
+    public record EmailRequest(@NotBlank @Email @Size(max = 200) String email) {
+    }
+
+    public record CodeLogin(@NotBlank @Email @Size(max = 200) String email, @NotBlank @Size(max = 12) String code) {
+    }
+
+    public record PasswordReset(@NotBlank @Size(max = 200) String token, @NotBlank @Size(min = 8, max = 128) String password) {
+    }
+
+    public record EmailPreference(@NotBlank @Email String email, @NotBlank @Size(max = 200) String token, boolean subscribed) {
     }
 }

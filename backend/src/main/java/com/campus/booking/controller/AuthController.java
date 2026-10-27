@@ -2,6 +2,9 @@ package com.campus.booking.controller;
 
 import com.campus.booking.dto.AuthDtos.AuthConfig;
 import com.campus.booking.dto.AuthDtos.AuthResponse;
+import com.campus.booking.dto.AuthDtos.CodeLogin;
+import com.campus.booking.dto.AuthDtos.EmailRequest;
+import com.campus.booking.dto.AuthDtos.PasswordReset;
 import com.campus.booking.dto.AuthDtos.GoogleLoginRequest;
 import com.campus.booking.dto.AuthDtos.LoginRequest;
 import com.campus.booking.dto.AuthDtos.RegisterRequest;
@@ -12,6 +15,7 @@ import com.campus.booking.exception.ApiExceptions.UnauthorizedException;
 import com.campus.booking.model.Role;
 import com.campus.booking.model.User;
 import com.campus.booking.repository.UserRepository;
+import com.campus.booking.security.EmailAuth;
 import com.campus.booking.security.JwtService;
 import com.campus.booking.security.google.GoogleSignIn;
 import jakarta.validation.Valid;
@@ -35,16 +39,18 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final GoogleSignIn google;
+    private final EmailAuth emailAuth;
     private final String googleClientId;
     private final boolean passwordSignup;
 
-    public AuthController(UserRepository users, PasswordEncoder encoder, JwtService jwt, GoogleSignIn google,
+    public AuthController(UserRepository users, PasswordEncoder encoder, JwtService jwt, GoogleSignIn google, EmailAuth emailAuth,
                           @Value("${app.google.client-id:}") String googleClientId,
                           @Value("${app.signup.password-enabled:true}") boolean passwordSignup) {
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
         this.google = google;
+        this.emailAuth = emailAuth;
         this.googleClientId = googleClientId == null ? "" : googleClientId.trim();
         this.passwordSignup = passwordSignup;
     }
@@ -52,7 +58,32 @@ public class AuthController {
     /** Public: lets the sign-in pages decide whether to show "Continue with Google" and "Create an account". */
     @GetMapping("/config")
     public AuthConfig config() {
-        return new AuthConfig(google.enabled() ? googleClientId : "", google.allowedDomains(), passwordSignup);
+        return new AuthConfig(google.enabled() ? googleClientId : "", google.allowedDomains(), passwordSignup,
+                emailAuth.enabled(), emailAuth.enabled());
+    }
+
+    /** Emails a 6-digit sign-in code to a college address. */
+    @PostMapping("/email-code")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void emailCode(@Valid @RequestBody EmailRequest req) {
+        emailAuth.requestCode(req.email());
+    }
+
+    @PostMapping("/email-code/verify")
+    public AuthResponse verifyEmailCode(@Valid @RequestBody CodeLogin req) {
+        return emailAuth.verifyCode(req.email(), req.code());
+    }
+
+    /** Always answers the same way, so nobody can use it to find out who has an account. */
+    @PostMapping("/password/forgot")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void forgotPassword(@Valid @RequestBody EmailRequest req) {
+        emailAuth.requestReset(req.email());
+    }
+
+    @PostMapping("/password/reset")
+    public AuthResponse resetPassword(@Valid @RequestBody PasswordReset req) {
+        return emailAuth.resetPassword(req.token(), req.password());
     }
 
     @PostMapping("/google")

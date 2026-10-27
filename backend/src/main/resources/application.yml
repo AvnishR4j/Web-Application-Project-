@@ -38,6 +38,15 @@ app:
   signup:
     # false = "Create an account" with a password is refused; people use Google instead.
     password-enabled: ${PASSWORD_SIGNUP_ENABLED:true}
+  mail:
+    # Email through Brevo (free: 300/day). Leave the key empty to turn email off; features that need it hide themselves.
+    brevo-api-key: ${BREVO_API_KEY:}
+    # The sender address you verified in Brevo.
+    from: ${MAIL_FROM:}
+    from-name: ${MAIL_FROM_NAME:Campus Board}
+    reminders-enabled: ${EVENT_REMINDERS:true}
+  # Where links in emails point.
+  base-url: ${APP_BASE_URL:https://campus-board-sepia-five.vercel.app}
   # One-time clean-up for demos: see DemoDataReset. Switch on, restart, switch off.
   reset-demo-data: ${RESET_DEMO_DATA:false}
 

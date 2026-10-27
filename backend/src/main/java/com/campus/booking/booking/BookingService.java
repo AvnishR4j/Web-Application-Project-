@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import com.campus.booking.mail.MailEvents.BookingDecided;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -53,11 +55,13 @@ public class BookingService {
     private final TransactionTemplate tx;
     private final Clock clock;
     private final ZoneId zone;
+    private final ApplicationEventPublisher publisher;
 
     public BookingService(ResourceRepository resources, BookingRepository bookings,
                           BlockedPeriodRepository blockedPeriods, TrainingRecordRepository training,
                           MongoTemplate mongo, MongoTransactionManager txManager, Clock clock,
-                          @Value("${app.booking.zone}") String zone) {
+                          @Value("${app.booking.zone}") String zone, ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
         this.resources = resources;
         this.bookings = bookings;
         this.blockedPeriods = blockedPeriods;
@@ -153,7 +157,9 @@ public class BookingService {
 
     public Booking approve(String bookingId, String adminEmail) {
         requireNotEventBooking(requireBooking(bookingId));
-        return decide(bookingId, adminEmail, BookingStatus.APPROVED, null);
+        Booking decided = decide(bookingId, adminEmail, BookingStatus.APPROVED, null);
+        publisher.publishEvent(new BookingDecided(bookingId));
+        return decided;
     }
 
     public Booking reject(String bookingId, String adminEmail, String reason) {
@@ -161,7 +167,9 @@ public class BookingService {
             throw new BadRequestException("A reason is required when rejecting a booking");
         }
         requireNotEventBooking(requireBooking(bookingId));
-        return decide(bookingId, adminEmail, BookingStatus.REJECTED, reason.trim());
+        Booking decided = decide(bookingId, adminEmail, BookingStatus.REJECTED, reason.trim());
+        publisher.publishEvent(new BookingDecided(bookingId));
+        return decided;
     }
 
     /** Used by the event workflow once the space manager approves the event. */
