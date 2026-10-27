@@ -13,6 +13,15 @@ export function GoogleLogo({ size = 20 }) {
   )
 }
 
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: 4 }}>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  )
+}
+
 const SCRIPT = 'https://accounts.google.com/gsi/client'
 let configPromise
 
@@ -46,6 +55,7 @@ function loadScript() {
 export default function GoogleButton({ clientId, domains = [], onDone, onError }) {
   const { loginWithGoogle } = useAuth()
   const box = useRef(null)
+  const [signing, setSigning] = useState(false)
 
   useEffect(() => {
     if (!clientId) return undefined
@@ -56,10 +66,16 @@ export default function GoogleButton({ clientId, domains = [], onDone, onError }
         window.google.accounts.id.initialize({
           client_id: clientId,
           hd: domains[0], // a hint only; the server enforces the domain
+          // Chrome and Edge show their own built-in account picker (FedCM) instead of opening a pop-up window.
+          use_fedcm_for_button: true,
+          button_auto_select: true,
+          context: 'signin',
           callback: async ({ credential }) => {
+            setSigning(true)
             try {
               onDone(await loginWithGoogle(credential))
             } catch (err) {
+              setSigning(false)
               onError(err.message)
             }
           },
@@ -81,12 +97,24 @@ export default function GoogleButton({ clientId, domains = [], onDone, onError }
   if (!clientId) return null
   return (
     <div className="google-signin">
-      <div className="google-btn">
-        <GoogleLogo />
-        <span>Continue with Google</span>
-        <span className="google-arrow" aria-hidden="true">→</span>
-        <div ref={box} className="google-overlay" />
+      <div className="google-btn" data-signing={signing} aria-busy={signing}>
+        {signing ? (
+          <>
+            <span className="google-spinner" aria-hidden="true" />
+            <span>Signing you in…</span>
+          </>
+        ) : (
+          <>
+            <GoogleLogo />
+            <span>Continue with Google</span>
+            <span className="google-arrow" aria-hidden="true">→</span>
+          </>
+        )}
+        <div ref={box} className="google-overlay" hidden={signing} />
       </div>
+      <p className="google-note">
+        <LockIcon /> You sign in on Google&apos;s own page. Campus Board never sees your password.
+      </p>
       {domains.length > 0 && <p className="google-note">College accounts only: @{domains.join(', @')}</p>}
     </div>
   )
