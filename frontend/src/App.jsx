@@ -19,6 +19,7 @@ import Login from './pages/Login'
 import MyBookings from './pages/MyBookings'
 import MyEvents from './pages/MyEvents'
 import MyRegistrations from './pages/MyRegistrations'
+import Privacy from './pages/Privacy'
 import Register from './pages/Register'
 import Reports from './pages/Reports'
 import Resources from './pages/Resources'
@@ -155,6 +156,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Home />} />
           </Route>

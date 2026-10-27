@@ -135,6 +135,7 @@ export default function Login() {
             New student? <Link to="/register">Create an account</Link>
           </p>
         )}
+        <p className="signin-foot" style={{ fontSize: '0.82rem' }}><Link to="/privacy">Privacy policy</Link></p>
       </div>
     </AuthLayout>
   )
