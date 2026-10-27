@@ -73,6 +73,11 @@ uses a different password, set on Render and shared only within the team. Changi
 resets every demo account to the new password. If your local backend uses the same database as the live site, set
 the same `DEMO_PASSWORD` locally too, or it will reset the accounts back to `Password@123`.
 
+**Resetting the demo data.** To clear everything people have created (events, bookings, registrations, check-ins,
+feedback, audit log) and load a clean set of events dated from today, including one running right now so the
+check-in QR can be shown, set `RESET_DEMO_DATA=true` together with `SEED_DEMO_DATA=true`, restart the backend once,
+then set it back to `false`. Users, rooms and the club are kept. It never runs unless you switch it on.
+
 Set a real `JWT_SECRET` (32+ characters) outside development. See `.env.example`.
 
 ## Build status
