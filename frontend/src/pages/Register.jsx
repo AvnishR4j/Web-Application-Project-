@@ -33,10 +33,16 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <form onSubmit={submit}>
-        <h2>Create a student account</h2>
+      <form onSubmit={submit} className="signin-card">
+        <header className="signin-head">
+          <h2>Create your account</h2>
+          <p>Students join here. Other roles are set up by a super admin.</p>
+        </header>
         {config?.googleClientId && (
-          <GoogleButton clientId={config.googleClientId} domains={config.googleDomains} onDone={() => navigate('/')} onError={setError} />
+          <>
+            <GoogleButton clientId={config.googleClientId} domains={config.googleDomains} onDone={() => navigate('/')} onError={setError} />
+            {config.passwordSignup !== false && <div className="or-divider"><span>or sign up with a password</span></div>}
+          </>
         )}
         {config?.passwordSignup === false && (
           <p className="muted" style={{ margin: 0 }}>Sign-up is with your college Google account. <Link to="/login">Back to log in</Link></p>
@@ -66,10 +72,9 @@ export default function Register() {
         )}
         {error && <p className="notice bad" role="alert">{error}</p>}
         {config?.passwordSignup !== false && <button disabled={busy}>{busy ? 'Creating your account...' : 'Create account'}</button>}
-        <p className="muted" style={{ margin: 0 }}>
+        <p className="signin-foot">
           Already registered? <Link to="/login">Log in</Link>
         </p>
-        <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>Club organizers, faculty advisors and admins get their accounts from a super admin.</p>
       </form>
     </AuthLayout>
   )
