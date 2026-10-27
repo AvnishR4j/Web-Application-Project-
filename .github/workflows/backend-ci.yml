@@ -30,3 +30,9 @@ jobs:
         env:
           MONGODB_URI: mongodb://localhost:27017/campus_ci?replicaSet=rs0
         run: mvn -B test
+      - name: Summarise test results
+        if: always()
+        run: |
+          for f in backend/target/surefire-reports/*.txt; do
+            echo "::notice title=$(basename "$f" .txt)::$(grep -h 'Tests run' "$f")"
+          done
