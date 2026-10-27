@@ -9,6 +9,7 @@ import com.campus.booking.exception.ApiExceptions.BadRequestException;
 import com.campus.booking.exception.ApiExceptions.ConflictException;
 import com.campus.booking.exception.ApiExceptions.ForbiddenException;
 import com.campus.booking.exception.ApiExceptions.NotFoundException;
+import com.campus.booking.mail.MailEvents.EventStatusChanged;
 import com.campus.booking.model.AuditLog;
 import com.campus.booking.model.Booking;
 import com.campus.booking.model.BookingStatus;
@@ -25,6 +26,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
@@ -44,10 +46,13 @@ public class EventService {
     private final RegistrationService registrations;
     private final Clock clock;
     private final int minLeadDays;
+    private final ApplicationEventPublisher publisher;
 
     public EventService(EventRepository events, ClubRepository clubs, ResourceRepository resources,
                         AuditLogRepository audit, BookingService bookings, RegistrationService registrations,
-                        Clock clock, @Value("${app.events.min-lead-days}") int minLeadDays) {
+                        Clock clock, @Value("${app.events.min-lead-days}") int minLeadDays,
+                        ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
         this.events = events;
         this.clubs = clubs;
         this.resources = resources;
@@ -95,6 +100,7 @@ public class EventService {
         }
         e.setStatus(to);
         e.setRejectionReason(null);
+        e.setReminderSentAt(null);
         Event saved = save(e);
         log(saved, "EDITED", from, to, who,
                 EventStateMachine.holdsRoom(from) ? "Edited after submission; needs approval again" : null);
@@ -313,6 +319,9 @@ public class EventService {
 
     private void log(Event e, String action, EventStatus from, EventStatus to, Requester who, String reason) {
         audit.save(new AuditLog(e.getId(), action, from, to, who.email(), reason));
+        if (to != null && to != from) {
+            publisher.publishEvent(new EventStatusChanged(e.getId(), from, to, reason));
+        }
     }
 
     private Event requireEvent(String id) {

@@ -8,4 +8,8 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    java.util.List<User> findByRole(com.campus.booking.model.Role role);
+
+    java.util.List<User> findByEmailIn(java.util.Collection<String> emails);
 }

@@ -24,6 +24,9 @@ public class User {
 
     private Instant createdAt = Instant.now();
 
+    /** Emails about newly published events. Null (never chosen) means yes. */
+    private Boolean eventEmails;
+
     public User() {
     }
 
@@ -49,4 +52,7 @@ public class User {
     public void setDepartment(String department) { this.department = department; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Boolean getEventEmails() { return eventEmails; }
+    public void setEventEmails(Boolean eventEmails) { this.eventEmails = eventEmails; }
+    public boolean wantsEventEmails() { return eventEmails == null || eventEmails; }
 }
