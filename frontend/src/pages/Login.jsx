@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import AuthLayout from '../components/AuthLayout'
+import GoogleButton, { useAuthConfig } from '../components/GoogleButton'
 
 export default function Login() {
   const { login } = useAuth()
@@ -11,6 +12,12 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const config = useAuthConfig()
+
+  function arrived() {
+    const from = location.state?.from
+    navigate(typeof from === 'string' && from.startsWith('/') ? from : '/', { replace: true })
+  }
 
   async function submit(e) {
     e.preventDefault()
@@ -19,8 +26,7 @@ export default function Login() {
     try {
       await login(email, password)
       // Go back to where the user was heading (for example a scanned check-in link).
-      const from = location.state?.from
-      navigate(typeof from === 'string' && from.startsWith('/') ? from : '/', { replace: true })
+      arrived()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -32,6 +38,12 @@ export default function Login() {
     <AuthLayout>
       <form onSubmit={submit}>
         <h2>Log in</h2>
+        {config?.googleClientId && (
+          <>
+            <GoogleButton clientId={config.googleClientId} domains={config.googleDomains} onDone={arrived} onError={setError} />
+            <p className="muted" style={{ margin: 0, textAlign: 'center' }}>or use a password</p>
+          </>
+        )}
         <label>
           College email
           <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -42,9 +54,11 @@ export default function Login() {
         </label>
         {error && <p className="notice bad" role="alert">{error}</p>}
         <button disabled={busy}>{busy ? 'Logging in...' : 'Log in'}</button>
-        <p className="muted" style={{ margin: 0 }}>
-          New student? <Link to="/register">Create an account</Link>
-        </p>
+        {config?.passwordSignup !== false && (
+          <p className="muted" style={{ margin: 0 }}>
+            New student? <Link to="/register">Create an account</Link>
+          </p>
+        )}
         <p className="demo-hint">
           Trying the demo? Use <code>student@campus.test</code>, <code>organizer@</code>, <code>advisor@</code>,{' '}
           <code>resources@</code> or <code>admin@campus.test</code>. Ask the team for the password.

@@ -41,14 +41,20 @@ export function AuthProvider({ children }) {
     [handleAuth],
   )
 
+  const loginWithGoogle = useCallback(
+    async (credential) =>
+      handleAuth(await api('/api/auth/google', { method: 'POST', body: { credential } })),
+    [handleAuth],
+  )
+
   const logout = useCallback(() => {
     tokenStore.clear()
     setUser(null)
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
-    [user, loading, login, register, logout],
+    () => ({ user, loading, login, loginWithGoogle, register, logout }),
+    [user, loading, login, loginWithGoogle, register, logout],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

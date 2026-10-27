@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import AuthLayout from '../components/AuthLayout'
+import GoogleButton, { useAuthConfig } from '../components/GoogleButton'
 
 export default function Register() {
   const { register } = useAuth()
@@ -10,6 +11,7 @@ export default function Register() {
   const [error, setError] = useState('')
   const [fields, setFields] = useState({})
   const [busy, setBusy] = useState(false)
+  const config = useAuthConfig()
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
@@ -33,6 +35,14 @@ export default function Register() {
     <AuthLayout>
       <form onSubmit={submit}>
         <h2>Create a student account</h2>
+        {config?.googleClientId && (
+          <GoogleButton clientId={config.googleClientId} domains={config.googleDomains} onDone={() => navigate('/')} onError={setError} />
+        )}
+        {config?.passwordSignup === false && (
+          <p className="muted" style={{ margin: 0 }}>Sign-up is with your college Google account. <Link to="/login">Back to log in</Link></p>
+        )}
+        {config?.passwordSignup !== false && (
+          <>
         <label>
           Full name
           <input autoComplete="name" value={form.name} onChange={set('name')} required />
@@ -52,8 +62,10 @@ export default function Register() {
           <input type="password" autoComplete="new-password" value={form.password} onChange={set('password')} minLength={8} required />
           {fields.password && <span className="error">{fields.password}</span>}
         </label>
+          </>
+        )}
         {error && <p className="notice bad" role="alert">{error}</p>}
-        <button disabled={busy}>{busy ? 'Creating your account...' : 'Create account'}</button>
+        {config?.passwordSignup !== false && <button disabled={busy}>{busy ? 'Creating your account...' : 'Create account'}</button>}
         <p className="muted" style={{ margin: 0 }}>
           Already registered? <Link to="/login">Log in</Link>
         </p>

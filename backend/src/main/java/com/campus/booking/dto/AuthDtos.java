@@ -44,4 +44,11 @@ public final class AuthDtos {
 
     public record AuthResponse(String token, UserResponse user) {
     }
+
+    public record GoogleLoginRequest(@NotBlank @Size(max = 4096) String credential) {
+    }
+
+    /** What the sign-in pages need to know: whether to offer Google, and whether passwords can create accounts. */
+    public record AuthConfig(String googleClientId, java.util.List<String> googleDomains, boolean passwordSignup) {
+    }
 }

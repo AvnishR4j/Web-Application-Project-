@@ -22,5 +22,13 @@ services:
       # Set to "true" for one restart to clear test data and load fresh demo events, then set back to "false".
       - key: RESET_DEMO_DATA
         value: "false"
+      # Google sign-in for the college domain. Paste the OAuth Client ID from Google Cloud; empty = button hidden.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_ALLOWED_DOMAINS
+        value: thapar.edu
+      # Set to "false" once Google sign-in works, so nobody can create a password account.
+      - key: PASSWORD_SIGNUP_ENABLED
+        value: "true"
       - key: BOOKING_ZONE
         value: Asia/Kolkata
