@@ -30,6 +30,8 @@ app:
     window-days: ${NOSHOW_WINDOW_DAYS:60}
   seed-demo-data: ${SEED_DEMO_DATA:false}
   demo-password: ${DEMO_PASSWORD:Password@123}
+  # One-time clean-up for demos: see DemoDataReset. Switch on, restart, switch off.
+  reset-demo-data: ${RESET_DEMO_DATA:false}
 
 server:
   port: 8080

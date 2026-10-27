@@ -19,5 +19,8 @@ services:
         value: "true"
       - key: DEMO_PASSWORD
         sync: false
+      # Set to "true" for one restart to clear test data and load fresh demo events, then set back to "false".
+      - key: RESET_DEMO_DATA
+        value: "false"
       - key: BOOKING_ZONE
         value: Asia/Kolkata
