@@ -572,3 +572,5 @@ code { font-family: ui-monospace, Menlo, monospace; background: var(--surface-2)
 .dial-center.live .s { margin-top: 0; font-size: 0.86rem; }
 .auth-dial .hands .h-min { stroke: #ece8de; }
 .auth-dial .hands .h-cap { fill: #191c1f; }
+
+.google-signin { display: grid; gap: 8px; justify-items: start; }
