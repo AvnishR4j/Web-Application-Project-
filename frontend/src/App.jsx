@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { api } from './api/client'
 import { ROLES, useAuth } from './auth/AuthContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import Icon, { BrandMark } from './components/Icon'
-import { useTheme } from './components/theme'
+import Backdrop from './components/Backdrop'
+import { campusHour, hhmm, sunTimes } from './components/sunlight'
 import AdminUsers from './pages/AdminUsers'
 import AuditLog from './pages/AuditLog'
 import ApprovalQueue from './pages/ApprovalQueue'
@@ -48,9 +49,9 @@ function navFor(role, counts) {
   const groups = [
     { name: 'Campus', links: [
       { to: '/', icon: 'clock', label: 'Today', short: 'Today', end: true },
-      { to: '/events', icon: 'calendar', label: 'Events', short: 'Events' },
+      { to: '/events', icon: 'calendar', label: 'Programme', short: 'Programme' },
       { to: '/registrations', icon: 'ticket', label: 'My tickets', short: 'Tickets' },
-      { to: '/resources', icon: 'door', label: 'Rooms and equipment', short: 'Rooms' },
+      { to: '/resources', icon: 'door', label: 'Rooms', short: 'Rooms' },
     ] },
     { name: 'Organize', links: [
       has(ORGANIZERS) && { to: '/my-events', icon: 'clipboard', label: 'My events', short: 'My events' },
@@ -89,66 +90,109 @@ function useReviewCounts(role) {
   return counts
 }
 
+/** A small popover that closes on outside click, Escape and navigation. */
+function usePopover() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const location = useLocation()
+  useEffect(() => setOpen(false), [location.pathname])
+  useEffect(() => {
+    if (!open) return undefined
+    const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', away)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc) }
+  }, [open])
+  return { open, setOpen, ref }
+}
+
+function SunTimes() {
+  const { rise, set } = sunTimes()
+  const h = campusHour()
+  const day = h >= rise && h < set
+  return <span className="suntimes">Patiala · {day ? `sunset ${hhmm(set)}` : `sunrise ${hhmm(rise)}`}</span>
+}
+
 function Shell({ children }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [theme, toggleTheme] = useTheme()
-  const [open, setOpen] = useState(false)
   const counts = useReviewCounts(user?.role)
-  useEffect(() => setOpen(false), [location.pathname])
+  const desk = usePopover()
+  const me = usePopover()
+  const sheet = usePopover()
 
-  if (!user) return <div className="app signed-out">{children}</div>
+  if (!user) return <div className="app signed-out"><Backdrop />{children}</div>
 
-  const themeButton = (
-    <button className="ghost icon" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to Day theme' : 'Switch to Night theme'}>
-      <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-      <span>{theme === 'dark' ? 'Day' : 'Night'}</span>
-    </button>
+  const groups = navFor(user.role, counts)
+  const campus = groups.find((g) => g.name === 'Campus')?.links || []
+  const deskGroups = groups.filter((g) => g.name !== 'Campus')
+  const waiting = deskGroups.flatMap((g) => g.links).reduce((n, l) => n + (l.count || 0), 0)
+  const deskActive = deskGroups.some((g) => g.links.some((l) => location.pathname.startsWith(l.to)))
+  const initials = user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+  const signOut = () => { logout(); navigate('/login') }
+
+  const link = (l) => (
+    <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'on' : undefined)}>
+      {l.label}{l.count > 0 && <span className="count" aria-label={`${l.count} waiting`}>{l.count}</span>}
+    </NavLink>
   )
 
   return (
     <div className="app">
-      <header className="topbar">
-        <Link to="/" className="brand"><BrandMark /><span className="brand-name">Campus Board</span></Link>
-        <button className="ghost icon" onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open}>
-          <Icon name="menu" /> Menu
-        </button>
-      </header>
-      {open && <div className="scrim" onClick={() => setOpen(false)} />}
-      <nav className={`rail${open ? ' open' : ''}`} aria-label="Main">
-        <div className="brand-row">
-          <Link to="/" className="brand" aria-label="Campus Board, today"><BrandMark /><span className="brand-name">Campus Board</span></Link>
-          {open && <button className="ghost" onClick={() => setOpen(false)} aria-label="Close menu"><Icon name="close" width="18" /></button>}
-        </div>
-        {navFor(user.role, counts).map((g) => (
-          <div key={g.name}>
-            {g.name !== 'Campus' && <div className="rail-group" role="separator"><span>{g.name}</span></div>}
-            {g.links.map((l) => (
-              <NavLink key={l.to} to={l.to} end={l.end} title={l.label} aria-label={l.label} className={({ isActive }) => `rail-link${isActive ? ' active' : ''}`}>
-                <Icon name={l.icon} />
-                <span className="rail-short">{l.short}</span>
-                <span className="rail-full">{l.label}</span>
-                {l.count > 0 && <span className="rail-count" aria-label={`${l.count} waiting`}>{l.count}</span>}
-              </NavLink>
-            ))}
+      <Backdrop />
+      <header className="masthead">
+        <Link to="/" className="brand" aria-label="Campus Board, today"><BrandMark /></Link>
+        <nav className="mainnav" aria-label="Main">
+          {campus.map(link)}
+          {deskGroups.length > 0 && (
+            <div className="pop" ref={desk.ref}>
+              <button type="button" className={`navbtn${deskActive ? ' on' : ''}`} aria-expanded={desk.open} onClick={() => desk.setOpen((o) => !o)}>
+                Desk{waiting > 0 && <span className="count">{waiting}</span>}<Icon name="chevron" className="chev" />
+              </button>
+              <div className={`popsheet desk${desk.open ? ' open' : ''}`} role="menu">
+                {deskGroups.map((g) => (
+                  <div key={g.name} className="popgroup">
+                    <span className="poplabel">{g.name}</span>
+                    {g.links.map(link)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </nav>
+        <div className="mast-right">
+          <SunTimes />
+          <div className="pop" ref={me.ref}>
+            <button type="button" className="avatar" aria-label="Your account" aria-expanded={me.open} onClick={() => me.setOpen((o) => !o)}>{initials}</button>
+            <div className={`popsheet me${me.open ? ' open' : ''}`}>
+              <strong>{user.name}</strong>
+              <span className="muted">{ROLE_NAME[user.role] || user.role}</span>
+              <span className="muted small">{user.email}</span>
+              <button type="button" className="secondary" onClick={signOut}><Icon name="logout" />Log out</button>
+            </div>
           </div>
-        ))}
-        <div className="rail-foot">
-          <span className="avatar" title={`${user.name}, ${ROLE_NAME[user.role] || user.role}`}>{user.name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</span>
-          <div className="who">
-            <strong>{user.name}</strong>
-            <span>{ROLE_NAME[user.role] || user.role}</span>
-          </div>
-          <div className="rail-actions">
-            {themeButton}
-            <button className="ghost icon" onClick={() => { logout(); navigate('/login') }}>
-              <Icon name="logout" /><span>Log out</span>
+          <div className="pop menu-pop" ref={sheet.ref}>
+            <button type="button" className="menu-btn" aria-label="Menu" aria-expanded={sheet.open} onClick={() => sheet.setOpen((o) => !o)}>
+              <Icon name={sheet.open ? 'close' : 'menu'} />
             </button>
+            <div className={`popsheet mobile${sheet.open ? ' open' : ''}`}>
+              {groups.map((g) => (
+                <div key={g.name} className="popgroup">
+                  <span className="poplabel">{g.name === 'Campus' ? 'Campus' : g.name}</span>
+                  {g.links.map(link)}
+                </div>
+              ))}
+              <div className="popgroup">
+                <span className="poplabel">{user.name} · {ROLE_NAME[user.role]}</span>
+                <button type="button" className="secondary" onClick={signOut}><Icon name="logout" />Log out</button>
+              </div>
+            </div>
           </div>
         </div>
-      </nav>
-      <main className="content" id="main">{children}</main>
+      </header>
+      <main className="content page" id="main" key={location.pathname}>{children}</main>
     </div>
   )
 }

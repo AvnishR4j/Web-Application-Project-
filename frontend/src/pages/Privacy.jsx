@@ -5,7 +5,7 @@ import { BrandMark } from '../components/Icon'
 export default function Privacy() {
   return (
     <article className="legal">
-      <Link to="/login" className="brand"><BrandMark /><span>Campus Board</span></Link>
+      <Link to="/login" className="brand"><BrandMark /></Link>
       <h1>Privacy policy</h1>
       <p className="muted">Last updated 27 October 2026</p>
 

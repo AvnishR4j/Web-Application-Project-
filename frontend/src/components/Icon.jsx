@@ -16,12 +16,14 @@ const PATHS = {
   sun: 'M12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',
   moon: 'M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z',
   logout: 'M14.5 4.5H19v15h-4.5M10 8l-4 4 4 4M6 12h9.5',
-  menu: 'M4 7h16M4 12h16M4 17h16',
+  menu: 'M4 8h16M4 16h16',
   close: 'M6 6l12 12M18 6 6 18',
   pin: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
   clock: 'M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17zM12 7.5V12l3 2',
   qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2M14 18h2M18 18h2v2',
   seat: 'M7 11V6.5A2.5 2.5 0 0 1 9.5 4h5A2.5 2.5 0 0 1 17 6.5V11M5 11h14v4H5zM7 15v5M17 15v5',
+  chevron: 'M7 10l5 5 5-5',
+  play: 'M8 5.5v13l10.5-6.5z',
 }
 
 export default function Icon({ name, title, ...rest }) {
@@ -34,15 +36,7 @@ export default function Icon({ name, title, ...rest }) {
   )
 }
 
-/** The Campus Board mark: a dial with its hand. */
+/** The Campus Board wordmark, set in the serif like a printed programme. */
 export function BrandMark() {
-  return (
-    <svg className="brand-mark" viewBox="0 0 34 34" aria-hidden="true">
-      <circle cx="17" cy="17" r="13" fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.4" />
-      <path d="M17 4a13 13 0 0 1 12.4 9" fill="none" stroke="#e3d3b0" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M23.5 26.2A13 13 0 0 1 9.5 27.6" fill="none" stroke="#a9c2a6" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M17 17l5-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-      <circle cx="17" cy="17" r="2" fill="currentColor" />
-    </svg>
-  )
+  return <span className="wordmark">Campus Board</span>
 }
