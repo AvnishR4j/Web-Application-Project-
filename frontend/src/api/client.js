@@ -36,21 +36,41 @@ export function api(path, options = {}) {
   return promise
 }
 
-async function request(path, { method = 'GET', body, headers: extra = {} } = {}) {
+const OFFLINE = "Couldn't reach the server. If the site was idle it can take up to a minute to wake up, so please try again."
+
+async function request(path, { method = 'GET', body, headers: extra = {} } = {}, attempt = 1) {
   const headers = { 'Content-Type': 'application/json', ...extra }
   const token = tokenStore.get()
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(path, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  let res
+  try {
+    res = await fetch(path, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch {
+    // The browser got no answer at all (Safari says "Load failed", Chrome "Failed to fetch").
+    // Reads are safe to repeat once; anything that changes data is left for the person to retry.
+    if (method === 'GET' && attempt === 1) {
+      await new Promise((r) => setTimeout(r, 2500))
+      return request(path, { method, body, headers: extra }, 2)
+    }
+    throw new ApiError(0, OFFLINE)
+  }
 
   const text = await res.text()
-  const data = text ? JSON.parse(text) : null
+  let data = null
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    // A gateway error page (HTML) instead of our JSON: the server is restarting or overloaded.
+    data = null
+  }
   if (!res.ok) {
-    throw new ApiError(res.status, data?.message || res.statusText, data?.fields || {})
+    const fallback = res.status >= 502 && res.status <= 504 ? OFFLINE : res.statusText || 'Something went wrong'
+    throw new ApiError(res.status, data?.message || fallback, data?.fields || {})
   }
   return data
 }
