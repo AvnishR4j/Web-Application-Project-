@@ -1,9 +1,9 @@
-/** Letters ink onto the page one after another. Words never break in the middle. */
+/** Headlines rise into place word by word. Whole words keep the font's own spacing (kerning) intact. */
 export default function Inked({ children, delay = 0.15 }) {
   let n = 0
   const word = (w) => (
-    <span key={`${w}-${n}`} style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
-      {[...w].map((ch) => <span key={n} className="ink-in" style={{ animationDelay: `${delay + n++ * 0.035}s` }}>{ch}</span>)}
+    <span key={`${w}-${n}`} className="ink-word">
+      <span className="ink-in" style={{ animationDelay: `${delay + n++ * 0.09}s` }}>{w}</span>
     </span>
   )
   return children.flatMap((part, i) => {
@@ -13,4 +13,3 @@ export default function Inked({ children, delay = 0.15 }) {
     return italic ? [<em key={`em-${i}`}>{pieces}</em>] : pieces
   })
 }
-

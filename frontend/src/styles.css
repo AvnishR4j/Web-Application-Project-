@@ -272,8 +272,9 @@ td .muted { font-size: 0.88rem; }
 .today-hero { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 56px; align-items: end; margin: 30px 0 46px; }
 .today-hero h1 { font-size: clamp(3.4rem, 2rem + 5.4vw, 7rem); line-height: 0.95; letter-spacing: -0.04em; margin: 14px 0 0; }
 .today-hero h1 em { font-style: italic; }
-.ink-in { display: inline-block; opacity: 0; filter: blur(10px); transform: translateY(14px); animation: ink-in 1.2s var(--ease) forwards; }
-@keyframes ink-in { to { opacity: 1; filter: blur(0); transform: none; } }
+.ink-word { display: inline-block; white-space: nowrap; padding: 0.06em 0.04em 0.3em; margin: -0.06em -0.04em -0.3em; overflow: hidden; vertical-align: bottom; }
+.ink-in { display: inline-block; opacity: 0; transform: translateY(0.45em); animation: ink-in 1s var(--ease) forwards; }
+@keyframes ink-in { to { opacity: 1; transform: none; } }
 .lede { margin: 22px 0 0; font-size: 1.08rem; line-height: 1.6; color: var(--ink-soft); max-width: 46ch; animation: fade-in 1s var(--ease) 0.7s both; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .hero-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; animation: fade-in 1s var(--ease) 0.9s both; }
