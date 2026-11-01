@@ -209,3 +209,25 @@ export function playDay(duration = 12000) {
     requestAnimationFrame(forward)
   })
 }
+
+/** While someone drags the sun: show that hour, and hold off the clock. */
+let returning = 0
+export function scrubTo(h) {
+  cancelAnimationFrame(returning)
+  playing = true
+  applyLight(h)
+}
+
+/** Let go: the light glides back to the real time. */
+export function releaseScrub(duration = 1400) {
+  const from = shown
+  const ease = (x) => 1 - Math.pow(1 - x, 3)
+  const t0 = performance.now()
+  const step = (t) => {
+    const q = Math.min(1, (t - t0) / duration)
+    applyLight(from + (campusHour() - from) * ease(q))
+    if (q < 1) returning = requestAnimationFrame(step)
+    else playing = false
+  }
+  returning = requestAnimationFrame(step)
+}

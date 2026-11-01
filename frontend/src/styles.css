@@ -667,3 +667,13 @@ html:not(.fonts-ready) .auth-hero p { animation-play-state: paused; }
 /* The page appears once, already in its final fonts, and fades in as a whole. */
 #root { transition: opacity 0.45s var(--ease); }
 html:not(.fonts-ready) #root { opacity: 0; }
+
+/* The day ruler can be dragged */
+.sunline { cursor: grab; touch-action: none; user-select: none; }
+.sunline::after { content: ''; position: absolute; left: -14px; right: -14px; top: 0; bottom: 0; }
+.sunline.dragging { cursor: grabbing; }
+.sunline:hover .sunmark, .sunline:focus-visible .sunmark { transform: scale(1.12); }
+.sunline.dragging .sunmark { transform: scale(1.25); box-shadow: 0 0 0 9px rgba(231, 160, 76, 0.22), 0 0 40px rgba(231, 160, 76, 0.7); }
+.sunmark { transition: background 0.6s, box-shadow 0.3s, transform 0.3s var(--spring); }
+.sunline:focus-visible { outline: none; }
+.sunline:focus-visible .sunmark { outline: 1.5px solid var(--ink); outline-offset: 4px; }
