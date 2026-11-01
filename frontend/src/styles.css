@@ -83,20 +83,65 @@ body { background: var(--desk); color: var(--ink); min-height: 100vh; overflow-x
 /* ---------- The desk: grain, window light, lamp ---------- */
 
 body::before {
-  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.38; mix-blend-mode: multiply;
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: -1; opacity: 0.38; mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .4 0 0 0 0 .33 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+/* Window light landing on the desk: four panes, soft-edged, in the colour of the light. */
 .gobo {
-  position: absolute; left: 0; top: 0; width: 1000px; height: 760px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 30px;
-  filter: blur(12px); opacity: 0; will-change: transform, opacity; transition: opacity 1.2s linear;
+  position: absolute; left: 0; top: 0; width: 1000px; height: 520px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 26px;
+  filter: blur(9px); will-change: transform; transition: opacity 1.2s linear;
 }
-.gobo i { background: rgba(255, 250, 238, 0.95); border-radius: 4px; }
-.lamp {
-  position: absolute; inset: 0; opacity: var(--lamp); transition: opacity 1.2s linear;
-  background: radial-gradient(900px 640px at 78% -8%, rgba(255, 206, 140, 0.5), transparent 70%), radial-gradient(1400px 900px at 50% 120%, rgba(70, 50, 30, 0.10), transparent 70%);
+.gobo i { background: var(--pane); border-radius: 3px; }
+
+/* In front of the page: the light in the room. Never catches clicks. */
+/* Each layer blends straight onto the page beneath it (a shared wrapper would isolate the blending). */
+.room-light { display: contents; }
+.rl { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.rl.tint { background: var(--tint); mix-blend-mode: multiply; }
+.rl.shafts { overflow: hidden; mix-blend-mode: screen; opacity: var(--beam-a); }
+.beams {
+  position: absolute; left: 0; top: 0; width: 70vw; margin-left: -35vw; transform-origin: 50% 0; will-change: transform;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 55%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 55%, transparent 100%);
 }
-.app, .content { position: relative; z-index: 1; }
+.beams > i {
+  position: absolute; top: 0; bottom: 0; filter: blur(14px);
+  background: linear-gradient(to bottom, rgba(var(--beam-c), 0.95), rgba(var(--beam-c), 0.55) 45%, rgba(var(--beam-c), 0.12) 85%, transparent);
+  animation: shimmer-beam 9s ease-in-out infinite alternate;
+}
+.beams > i:nth-child(2n) { animation-duration: 13s; animation-delay: -4s; }
+.beams > i:nth-child(3n) { animation-duration: 11s; animation-delay: -7s; }
+@keyframes shimmer-beam { 0% { opacity: 0.55; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+.motes { position: absolute; inset: 0; }
+.motes b { position: absolute; border-radius: 50%; background: rgb(var(--beam-c)); box-shadow: 0 0 6px rgba(var(--beam-c), 0.9); opacity: 0; animation: drift 18s linear infinite; }
+@keyframes drift {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.9; }
+  50% { transform: translate(28px, -40px); opacity: 0.6; }
+  85% { opacity: 0.85; }
+  100% { transform: translate(-18px, -90px); opacity: 0; }
+}
+.rl.lamp {
+  opacity: var(--lamp); mix-blend-mode: screen;
+  background: radial-gradient(900px 640px at 36% 52%, rgba(255, 178, 96, 0.16), rgba(255, 160, 80, 0.06) 50%, transparent 78%);
+}
+.rl.vignette {
+  mix-blend-mode: multiply; opacity: var(--vig);
+  background: radial-gradient(130% 110% at 40% 42%, transparent 35%, rgba(40, 28, 18, 0.55) 78%, rgba(20, 14, 10, 0.95) 100%);
+}
+
+/* Paper keeps dark ink whatever the light in the room; ink on the desk itself follows the room. */
+.tk-paper, .panel, table, .signin-card, .popsheet, .notice, .daystrip, .desk-note, .card form.stack, .avatar, .grid > .notice {
+  --ink: #1D1B17; --ink-soft: #3F3A32; --muted: #6B6458; --line-strong: #C9BFAD; --on-sand: #FBF8F1;
+  color: var(--ink);
+}
+input, select, textarea { --ink: #1D1B17; --muted: #6B6458; color: var(--ink); }
+.notice.good { color: var(--sage); }
+.notice.bad { color: #7F2419; }
+
+/* No stacking context on the app, so the room's light blends with the desk itself, not just the page content. */
+.app, .content { position: relative; }
 
 /* ---------- Type ---------- */
 
@@ -461,7 +506,7 @@ td .muted { font-size: 0.88rem; }
 
 /* ---------- Sign-in ---------- */
 
-.auth { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 100vh; }
+.auth { position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); min-height: 100vh; }
 .auth-board { padding: 34px clamp(24px, 5vw, 64px) 40px; display: flex; flex-direction: column; justify-content: space-between; gap: 28px; }
 .auth-board .brand .wordmark { font-size: 1.6rem; }
 .auth-hero h1 { font-size: clamp(3rem, 1.8rem + 4.2vw, 6rem); line-height: 0.96; letter-spacing: -0.04em; margin: 0; max-width: 11ch; }
@@ -552,7 +597,7 @@ td .muted { font-size: 0.88rem; }
 
 /* ---------- Privacy policy ---------- */
 
-.legal { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 40px 20px 90px; line-height: 1.75; }
+.legal { position: relative; max-width: 720px; margin: 0 auto; padding: 40px 20px 90px; line-height: 1.75; }
 .legal .brand { display: inline-block; margin-bottom: 40px; }
 .legal h1 { font-size: 3rem; margin-bottom: 4px; }
 .legal h2 { font-size: 1.4rem; margin: 34px 0 8px; }
@@ -622,3 +667,13 @@ html:not(.fonts-ready) .auth-hero p { animation-play-state: paused; }
 /* The page appears once, already in its final fonts, and fades in as a whole. */
 #root { transition: opacity 0.45s var(--ease); }
 html:not(.fonts-ready) #root { opacity: 0; }
+
+/* The day ruler can be dragged */
+.sunline { cursor: grab; touch-action: none; user-select: none; }
+.sunline::after { content: ''; position: absolute; left: -14px; right: -14px; top: 0; bottom: 0; }
+.sunline.dragging { cursor: grabbing; }
+.sunline:hover .sunmark, .sunline:focus-visible .sunmark { transform: scale(1.12); }
+.sunline.dragging .sunmark { transform: scale(1.25); box-shadow: 0 0 0 9px rgba(231, 160, 76, 0.22), 0 0 40px rgba(231, 160, 76, 0.7); }
+.sunmark { transition: background 0.6s, box-shadow 0.3s, transform 0.3s var(--spring); }
+.sunline:focus-visible { outline: none; }
+.sunline:focus-visible .sunmark { outline: 1.5px solid var(--ink); outline-offset: 4px; }

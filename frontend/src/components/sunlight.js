@@ -34,23 +34,60 @@ export function hhmm(h) {
 
 const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * Math.min(1, Math.max(0, t)))
 const clamp01 = (x) => Math.min(1, Math.max(0, x))
+const smooth = (t) => t * t * (3 - 2 * t)
+const rgb = (c) => `${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}`
 
-// Desk colours through the day.
-const DAWN = [228, 216, 205]
-const DAY = [236, 230, 219]
-const GOLD = [240, 226, 204]
-const DUSK = [228, 211, 194]
-const LAMP = [216, 204, 188]
-
-function deskColour(h, rise, set) {
-  if (h < rise - 0.6 || h > set + 0.8) return LAMP
-  if (h < rise) return mix(LAMP, DAWN, (h - (rise - 0.6)) / 0.6)
-  if (h < rise + 1.6) return mix(DAWN, DAY, (h - rise) / 1.6)
-  if (h < set - 2) return DAY
-  if (h < set - 0.4) return mix(DAY, GOLD, (h - (set - 2)) / 1.6)
-  if (h < set + 0.3) return mix(GOLD, DUSK, (h - (set - 0.4)) / 0.7)
-  return mix(DUSK, LAMP, (h - (set + 0.3)) / 0.5)
+/*
+ * The room through the day. Each moment sets:
+ *   desk     colour of the desk (page background)
+ *   tint     colour the whole scene is multiplied by (the colour of the light in the room)
+ *   beam     colour and strength of the sun shafts through the window
+ *   pane     colour and strength of the window light landing on the desk
+ *   vig      how dark the corners of the room are
+ *   lamp     how much the desk lamp is lighting the page
+ *   paper    colour of the ticket stock in that light
+ */
+const ROOM = {
+  night:    { desk: [44, 38, 33],    tint: [232, 222, 206], beam: [180, 200, 240, 0],    pane: [170, 192, 236, 0.10], vig: 0.62, lamp: 1,    paper: [238, 228, 210] },
+  blue:     { desk: [184, 186, 196], tint: [226, 230, 240], beam: [190, 205, 235, 0.06], pane: [200, 212, 238, 0.22], vig: 0.32, lamp: 0.3,  paper: [242, 241, 238] },
+  dawn:     { desk: [212, 192, 184], tint: [250, 232, 226], beam: [255, 196, 170, 0.42], pane: [255, 210, 186, 0.6],  vig: 0.24, lamp: 0,    paper: [251, 243, 236] },
+  morning:  { desk: [233, 226, 213], tint: [255, 251, 244], beam: [255, 238, 208, 0.5],  pane: [255, 247, 228, 0.85], vig: 0.12, lamp: 0,    paper: [251, 248, 241] },
+  noon:     { desk: [238, 233, 224], tint: [255, 255, 252], beam: [255, 250, 238, 0.22], pane: [255, 252, 244, 0.7],  vig: 0.07, lamp: 0,    paper: [251, 248, 241] },
+  after:    { desk: [237, 229, 214], tint: [255, 250, 240], beam: [255, 234, 196, 0.42], pane: [255, 242, 214, 0.85], vig: 0.1,  lamp: 0,    paper: [251, 247, 238] },
+  golden:   { desk: [238, 218, 186], tint: [255, 240, 214], beam: [255, 192, 112, 0.85], pane: [255, 204, 132, 0.95], vig: 0.2,  lamp: 0,    paper: [252, 242, 224] },
+  sunset:   { desk: [224, 186, 164], tint: [252, 228, 214], beam: [255, 142, 92, 0.6],   pane: [255, 156, 108, 0.75], vig: 0.32, lamp: 0.05, paper: [248, 234, 222] },
+  dusk:     { desk: [184, 168, 182], tint: [238, 228, 236], beam: [210, 160, 210, 0.08], pane: [200, 170, 214, 0.18], vig: 0.36, lamp: 0.35, paper: [244, 236, 232] },
 }
+
+/** Where each moment falls today, from sunrise (r) and sunset (s). */
+function timeline(r, s) {
+  const m = (r + s) / 2
+  return [
+    [r - 1.6, ROOM.night], [r - 0.6, ROOM.blue], [r, ROOM.dawn], [r + 1.4, ROOM.morning],
+    [m, ROOM.noon], [s - 2.4, ROOM.after], [s - 0.9, ROOM.golden], [s, ROOM.sunset],
+    [s + 0.45, ROOM.dusk], [s + 1.3, ROOM.night],
+  ]
+}
+
+function roomAt(h, r, s) {
+  const tl = timeline(r, s)
+  if (h <= tl[0][0] || h >= tl[tl.length - 1][0]) return ROOM.night
+  for (let i = 0; i < tl.length - 1; i++) {
+    const [h0, a] = tl[i]
+    const [h1, b] = tl[i + 1]
+    if (h <= h1) {
+      const t = smooth((h - h0) / (h1 - h0))
+      const out = {}
+      for (const k of Object.keys(a)) out[k] = Array.isArray(a[k]) ? mix(a[k], b[k], t) : a[k] + (b[k] - a[k]) * t
+      return out
+    }
+  }
+  return ROOM.night
+}
+
+const INK = [29, 27, 23]
+const CREAM = [238, 228, 212]
+const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
 const listeners = new Set()
 let shown = campusHour()
@@ -62,39 +99,70 @@ export function applyLight(h) {
   shown = h
   const { rise, set } = sunTimes()
   const root = document.documentElement
-  const k = (h - rise) / (set - rise) // 0 at sunrise, 1 at sunset
-  const day = k > -0.03 && k < 1.03
-  const daylight = clamp01(Math.min((h - (rise - 0.4)) / 0.8, (set + 0.4 - h) / 0.8)) // 0 at night, 1 in the day
+  const W = window.innerWidth
+  const H = window.innerHeight
+  const room = roomAt(h, rise, set)
+  const k = clamp01((h - rise) / (set - rise)) // 0 at sunrise, 1 at sunset
+  const up = h > rise - 0.2 && h < set + 0.2
+  const elev = Math.max(0.06, Math.sin(Math.PI * k)) // how high the sun is
+  const daylight = 1 - room.lamp
 
-  // Sun shadow: long and soft when the sun is low, short and crisp at noon.
-  const az = Math.PI * clamp01(k)
-  const elev = Math.max(0.08, Math.sin(az))
-  const len = 4 + (1 - elev) * 22
-  const sunX = Math.cos(az) * len
-  const sunY = 6 + (1 - elev) * 7
-  const sunBlur = 10 + (1 - elev) * 20
-  const warm = 1 - elev
-  // Lamp shadow (night): straight down from a lamp above the page.
-  const sx = sunX * daylight
-  const sy = sunY * daylight + 13 * (1 - daylight)
-  const sb = sunBlur * daylight + 26 * (1 - daylight)
-  const alpha = (0.15 + warm * 0.12) * daylight + 0.26 * (1 - daylight)
-  root.style.setProperty('--sx', `${sx.toFixed(1)}px`)
-  root.style.setProperty('--sy', `${sy.toFixed(1)}px`)
-  root.style.setProperty('--sb', `${sb.toFixed(1)}px`)
-  root.style.setProperty('--sc', `rgba(${Math.round(72 + warm * 36 * daylight)}, ${Math.round(54 + warm * 8)}, 32, ${alpha.toFixed(3)})`)
-  const [r, g, b] = deskColour(h, rise, set)
-  root.style.setProperty('--desk', `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`)
-  root.style.setProperty('--lamp', (1 - daylight).toFixed(3))
+  // Ink on the desk turns light when the room gets dark; paper always keeps dark ink.
+  const dl = lum(room.desk)
+  const t = smooth(clamp01((150 - dl) / 60)) // 0 = dark ink, 1 = light ink
+  const ink = mix(INK, CREAM, t)
+  const soft = mix([63, 58, 50], [214, 202, 184], t)
+  const muted = mix([107, 100, 88], [170, 158, 142], t)
+  const rule = mix([201, 191, 173], [104, 94, 82], t)
+  const set3 = (k3, v) => root.style.setProperty(k3, v)
+  set3('--desk', `rgb(${rgb(room.desk)})`)
+  set3('--ink', `rgb(${rgb(ink)})`)
+  set3('--ink-soft', `rgb(${rgb(soft)})`)
+  set3('--muted', `rgb(${rgb(muted)})`)
+  set3('--line-strong', `rgb(${rgb(rule)})`)
+  set3('--on-sand', `rgb(${rgb(t > 0.5 ? room.desk : [251, 248, 241])})`)
+  set3('--surface', `rgb(${rgb(room.paper)})`)
+  set3('--raised', `rgb(${rgb(mix(room.paper, [255, 255, 255], 0.35))})`)
+  set3('--tint', `rgb(${rgb(room.tint)})`)
+  set3('--vig', room.vig.toFixed(3))
+  set3('--lamp', room.lamp.toFixed(3))
+  set3('--beam', `rgba(${rgb(room.beam)}, ${room.beam[3].toFixed(3)})`)
+  set3('--beam-a', room.beam[3].toFixed(3))
+  set3('--beam-c', rgb(room.beam))
+  set3('--pane', `rgba(${rgb(room.pane)}, ${room.pane[3].toFixed(3)})`)
+  set3('--dark', t.toFixed(3))
 
-  // Window light: slides across the desk opposite the sun, stretched when the sun is low.
-  const gobo = document.getElementById('gobo')
-  if (gobo) {
-    const W = window.innerWidth
-    const x = W * (0.72 - clamp01(k) * 0.95)
-    const y = 90 + elev * 70
-    gobo.style.transform = `translate3d(${x.toFixed(0)}px, ${y.toFixed(0)}px, 0) skewX(${((0.5 - clamp01(k)) * 48).toFixed(1)}deg) scaleY(${(0.75 + (1 - elev) * 0.35).toFixed(3)})`
-    gobo.style.opacity = day ? (0.4 + (1 - elev) * 0.45).toFixed(2) : '0'
+  // Shadows: from the sun by day (long and warm when low), straight down from the lamp at night.
+  const az = Math.PI * k
+  const len = 4 + (1 - elev) * 24
+  const sx = Math.cos(az) * len * daylight
+  const sy = (6 + (1 - elev) * 8) * daylight + 14 * (1 - daylight)
+  const sb = (10 + (1 - elev) * 22) * daylight + 28 * (1 - daylight)
+  const alpha = (0.15 + (1 - elev) * 0.14) * daylight + 0.42 * (1 - daylight)
+  set3('--sx', `${sx.toFixed(1)}px`)
+  set3('--sy', `${sy.toFixed(1)}px`)
+  set3('--sb', `${sb.toFixed(1)}px`)
+  set3('--sc', `rgba(${Math.round(70 + (1 - elev) * 40 * daylight)}, ${Math.round(52 + (1 - elev) * 8)}, 30, ${alpha.toFixed(3)})`)
+
+  // The window is above the page. Its light lands on the desk opposite the sun (the panes) and
+  // is visible in the air as shafts running from the window to the panes (the beams).
+  const landX = W * (0.78 - k * 0.9)          // where the window light lands (morning: right, evening: left)
+  const landY = H * (0.42 + (1 - elev) * 0.12)
+  const winX = W * (0.02 + k * 0.96)          // where the window is (towards the sun)
+  const winY = -H * (0.15 + elev * 0.55)      // high sun: window far above, steep beams
+  const dx = landX - winX
+  const dy = landY - winY
+  const angle = (Math.atan2(-dx, dy) * 180) / Math.PI
+  const length = Math.hypot(dx, dy) * 1.25
+  const panes = document.getElementById('gobo')
+  if (panes) {
+    panes.style.transform = `translate3d(${(landX - 500).toFixed(0)}px, ${(landY - 260).toFixed(0)}px, 0) skewX(${((0.5 - k) * 46).toFixed(1)}deg) scaleY(${(0.7 + (1 - elev) * 0.4).toFixed(3)})`
+    panes.style.opacity = up ? '1' : '0.9'
+  }
+  const beams = document.getElementById('beams')
+  if (beams) {
+    beams.style.transform = `translate3d(${winX.toFixed(0)}px, ${winY.toFixed(0)}px, 0) rotate(${angle.toFixed(2)}deg)`
+    beams.style.height = `${length.toFixed(0)}px`
   }
   listeners.forEach((fn) => fn(h))
 }
@@ -116,12 +184,12 @@ export function onLight(fn) {
 export const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 /** Time-lapse: the whole day from just before sunrise to after dusk, then back to now. */
-export function playDay(duration = 9000) {
+export function playDay(duration = 12000) {
   if (playing) return Promise.resolve()
   playing = true
   const { rise, set } = sunTimes()
-  const from = rise - 0.5
-  const to = set + 1.2
+  const from = rise - 1.2
+  const to = set + 1.6
   const ease = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2)
   return new Promise((resolve) => {
     const t0 = performance.now()
@@ -140,4 +208,26 @@ export function playDay(duration = 9000) {
     }
     requestAnimationFrame(forward)
   })
+}
+
+/** While someone drags the sun: show that hour, and hold off the clock. */
+let returning = 0
+export function scrubTo(h) {
+  cancelAnimationFrame(returning)
+  playing = true
+  applyLight(h)
+}
+
+/** Let go: the light glides back to the real time. */
+export function releaseScrub(duration = 1400) {
+  const from = shown
+  const ease = (x) => 1 - Math.pow(1 - x, 3)
+  const t0 = performance.now()
+  const step = (t) => {
+    const q = Math.min(1, (t - t0) / duration)
+    applyLight(from + (campusHour() - from) * ease(q))
+    if (q < 1) returning = requestAnimationFrame(step)
+    else playing = false
+  }
+  returning = requestAnimationFrame(step)
 }
