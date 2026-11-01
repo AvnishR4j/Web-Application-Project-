@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { api, tokenStore } from '../api/client'
+import { api, peek, seed, tokenStore } from '../api/client'
 
 export const ROLES = {
   STUDENT: 'STUDENT',
@@ -12,20 +12,25 @@ export const ROLES = {
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(Boolean(tokenStore.get()))
+  // After a refresh, show the app straight away with the last-known user and check the session behind it.
+  const cached = tokenStore.get() ? peek('/api/users/me') : undefined
+  const [user, setUser] = useState(cached || null)
+  const [loading, setLoading] = useState(Boolean(tokenStore.get()) && !cached)
 
-  // Restore the session after a page refresh.
   useEffect(() => {
     if (!tokenStore.get()) return
-    api('/api/users/me')
+    api('/api/users/me', { fresh: true })
       .then(setUser)
-      .catch(() => tokenStore.clear())
+      .catch((err) => {
+        // Only a rejected session signs you out; a slow or unreachable server does not.
+        if (err.status === 401 || err.status === 403) { tokenStore.clear(); setUser(null) }
+      })
       .finally(() => setLoading(false))
   }, [])
 
   const handleAuth = useCallback((res) => {
     tokenStore.set(res.token)
+    seed('/api/users/me', res.user)
     setUser(res.user)
     return res.user
   }, [])

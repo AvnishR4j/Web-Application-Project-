@@ -52,3 +52,8 @@ app:
 
 server:
   port: 8080
+  # Smaller responses, quicker pages: lists of events and rooms compress well.
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 1024

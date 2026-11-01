@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, peek } from '../api/client'
 import Ticket, { dayLabel, seatStamp, serial, stampDate } from '../components/Ticket'
 import { STATUS_LABEL, describeError } from './eventUtils'
 
@@ -34,10 +34,10 @@ function FeedbackForm({ eventId, onDone }) {
 
 /** Your tickets: every place you hold, stamped with where it stands. */
 export default function MyRegistrations() {
-  const [items, setItems] = useState([])
+  const [items, setItems] = useState(() => peek('/api/registrations/mine') || [])
   const [error, setError] = useState('')
-  const [loaded, setLoaded] = useState(false)
-  const [standing, setStanding] = useState(null)
+  const [loaded, setLoaded] = useState(() => Boolean(peek('/api/registrations/mine')))
+  const [standing, setStanding] = useState(() => peek('/api/registrations/standing') || null)
 
   const load = useCallback(() => {
     api('/api/registrations/mine', { fresh: true }).then(setItems).catch((e) => setError(e.message)).finally(() => setLoaded(true))

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { api } from './api/client'
+import { api, prefetch } from './api/client'
 import { ROLES, useAuth } from './auth/AuthContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import Icon, { BrandMark } from './components/Icon'
@@ -90,6 +90,22 @@ function useReviewCounts(role) {
   return counts
 }
 
+/** The data each page shows first, fetched ahead so pages open instantly. */
+const PAGE_DATA = {
+  '/': ['/api/events', '/api/events/seats', '/api/clubs', '/api/resources'],
+  '/events': ['/api/events', '/api/events/seats', '/api/clubs', '/api/resources'],
+  '/registrations': ['/api/registrations/mine', '/api/registrations/standing'],
+  '/resources': ['/api/resources'],
+  '/my-events': ['/api/events/mine', '/api/clubs/mine', '/api/resources', '/api/events/rules'],
+  '/book': ['/api/resources'],
+  '/bookings': ['/api/bookings/mine', '/api/resources?includeInactive=true'],
+  '/advisor': ['/api/events/advisor-queue', '/api/clubs', '/api/resources'],
+  '/event-approvals': ['/api/events/manager-queue', '/api/clubs', '/api/resources'],
+  '/approvals': ['/api/bookings?status=PENDING', '/api/resources'],
+  '/clubs': ['/api/clubs'],
+  '/admin/users': ['/api/admin/users'],
+}
+
 /** A small popover that closes on outside click, Escape and navigation. */
 function usePopover() {
   const [open, setOpen] = useState(false)
@@ -122,6 +138,12 @@ function Shell({ children }) {
   const desk = usePopover()
   const me = usePopover()
   const sheet = usePopover()
+  // Once signed in, quietly fetch the main pages so the first click is instant too.
+  useEffect(() => {
+    if (!user) return undefined
+    const t = setTimeout(() => ['/', '/registrations', '/resources'].forEach((p) => prefetch(PAGE_DATA[p])), 600)
+    return () => clearTimeout(t)
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) return <div className="app signed-out"><Backdrop />{children}</div>
 
@@ -133,8 +155,10 @@ function Shell({ children }) {
   const initials = user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
   const signOut = () => { logout(); navigate('/login') }
 
+  const warm = (to) => prefetch(PAGE_DATA[to] || [])
   const link = (l) => (
-    <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'on' : undefined)}>
+    <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'on' : undefined)}
+      onMouseEnter={() => warm(l.to)} onFocus={() => warm(l.to)} onTouchStart={() => warm(l.to)}>
       {l.label}{l.count > 0 && <span className="count" aria-label={`${l.count} waiting`}>{l.count}</span>}
     </NavLink>
   )

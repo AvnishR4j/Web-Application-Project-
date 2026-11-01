@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, peek } from '../api/client'
 import { byId, describeError } from '../pages/eventUtils'
 import Ticket, { dayLabel, seatStamp, serial } from './Ticket'
 
@@ -9,7 +9,13 @@ import Ticket, { dayLabel, seatStamp, serial } from './Ticket'
  * Taking a seat registers (or joins the waitlist), tears the stub and stamps the ticket.
  */
 export default function useProgramme() {
-  const [state, setState] = useState({ events: [], seats: {}, clubs: {}, rooms: {}, loaded: false })
+  const [state, setState] = useState(() => {
+    // Draw the last-seen programme at once; the fresh one replaces it a moment later.
+    const [events, seats, clubs, rooms] = ['/api/events', '/api/events/seats', '/api/clubs', '/api/resources'].map(peek)
+    return events && seats
+      ? { events: [...events].sort((a, b) => new Date(a.start) - new Date(b.start)), seats: Object.fromEntries(seats.map((x) => [x.eventId, x])), clubs: byId(clubs || []), rooms: byId(rooms || []), loaded: true }
+      : { events: [], seats: {}, clubs: {}, rooms: {}, loaded: false }
+  })
   const [error, setError] = useState('')
 
   const load = useCallback((fresh = false) => {
