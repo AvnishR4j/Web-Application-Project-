@@ -5,6 +5,10 @@
  *   green ink = confirmed / checked in, sepia = waiting, red = live now / refused, and red stamps for admission.
  */
 
+@font-face { font-family: 'Fraunces'; src: url('/fonts/fraunces.woff2') format('woff2-variations'); font-weight: 100 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'Fraunces'; src: url('/fonts/fraunces-italic.woff2') format('woff2-variations'); font-weight: 100 900; font-style: italic; font-display: block; }
+@font-face { font-family: 'Inter'; src: url('/fonts/inter.woff2') format('woff2-variations'); font-weight: 100 900; font-style: normal; font-display: block; }
+
 :root {
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -614,3 +618,7 @@ html:not(.fonts-ready) .auth-hero p { animation-play-state: paused; }
 /* Once the stub is gone the stamp sits on the torn edge; keep text clear of it */
 .tk.torn .tk-main h3, .tk.torn .tk-club, .tk.torn .tk-desc,
 .tk.tearing .tk-main h3, .tk.tearing .tk-club, .tk.tearing .tk-desc { padding-right: 60px; }
+
+/* The page appears once, already in its final fonts, and fades in as a whole. */
+#root { transition: opacity 0.45s var(--ease); }
+html:not(.fonts-ready) #root { opacity: 0; }
