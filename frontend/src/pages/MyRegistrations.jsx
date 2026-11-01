@@ -117,7 +117,7 @@ export default function MyRegistrations() {
       ) : (
         <>
           {upcoming.length ? <div className="ticket-grid">{upcoming.map(describe)}</div>
-            : <div className="empty"><p>Nothing coming up.</p><Link to="/events"><button>Browse the programme</button></Link></div>}
+            : <div className="empty-inline"><span>Nothing coming up.</span><Link to="/events">Browse the programme →</Link></div>}
           {past.length > 0 && (<>
             <h2 className="date-group" style={{ marginTop: 56 }}>Past and given up</h2>
             <div className="ticket-grid">{past.map((x, i) => describe(x, i + upcoming.length))}</div>
