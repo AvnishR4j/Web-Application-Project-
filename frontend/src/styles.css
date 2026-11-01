@@ -601,3 +601,15 @@ html:not(.fonts-ready) .tk-paper,
 html:not(.fonts-ready) .signin-card,
 html:not(.fonts-ready) .lede,
 html:not(.fonts-ready) .auth-hero p { animation-play-state: paused; }
+
+/* A one-line empty state, for when there is other content below */
+.empty-inline {
+  display: inline-flex; align-items: baseline; gap: 18px; flex-wrap: wrap; padding: 14px 20px;
+  border: 1px dashed var(--line-strong); border-radius: var(--radius-m); color: var(--muted);
+}
+.empty-inline span { font-family: var(--font-display); font-size: 1.15rem; color: var(--ink-soft); }
+.empty-inline a { font-size: 0.92rem; font-weight: 550; }
+
+/* Once the stub is gone the stamp sits on the torn edge; keep text clear of it */
+.tk.torn .tk-main h3, .tk.torn .tk-club, .tk.torn .tk-desc,
+.tk.tearing .tk-main h3, .tk.tearing .tk-club, .tk.tearing .tk-desc { padding-right: 60px; }
