@@ -8,7 +8,7 @@ import './styles.css'
 // Start the entrance animations only once the fonts are in (or after 2.5 s on a slow connection).
 const ready = () => document.documentElement.classList.add('fonts-ready')
 if (document.fonts?.load) {
-  Promise.all(['400 1em Lora', 'italic 400 1em Lora', '500 1em Lora', '400 1em Inter'].map((f) => document.fonts.load(f)))
+  Promise.all(['400 1em Fraunces', 'italic 400 1em Fraunces', '500 1em Fraunces', '400 1em Inter'].map((f) => document.fonts.load(f)))
     .then(ready, ready)
   setTimeout(ready, 2500)
 } else {
