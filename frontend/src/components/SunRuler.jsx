@@ -14,7 +14,9 @@ export default function SunRuler() {
   if (h === null) return null
   const pos = (x) => `${((Math.min(H1, Math.max(H0, x)) - H0) / (H1 - H0)) * 100}%`
   const up = h >= rise && h <= set
-  const label = up ? (set - h < 1.2 ? 'Golden hour' : h - rise < 1.5 ? 'Morning light' : 'Daylight') : 'Lamp light'
+  const label = up
+    ? (set - h < 1.2 ? 'Golden hour' : h - rise < 1.5 ? 'Morning light' : 'Daylight')
+    : h > set && h - set < 1.1 ? 'Dusk' : h < rise && rise - h < 1.1 ? 'Blue hour' : 'Lamp light'
 
   async function play() {
     setPlaying(true)
