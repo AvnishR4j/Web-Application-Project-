@@ -27,14 +27,20 @@ let configPromise
 
 /** What the sign-in pages need to know (fetched once). Falls back to "no Google, passwords on" if unreachable. */
 export function useAuthConfig() {
-  const [config, setConfig] = useState(null)
+  // The sign-in options rarely change, so the page shows the last-known ones at once and checks behind.
+  const [config, setConfig] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('campus.authConfig')) } catch { return null }
+  })
   useEffect(() => {
-    configPromise ||= api('/api/auth/config', { fresh: true }).catch(() => {
+    configPromise ||= api('/api/auth/config', { fresh: true }).then((c) => {
+      try { localStorage.setItem('campus.authConfig', JSON.stringify(c)) } catch { /* unavailable */ }
+      return c
+    }).catch(() => {
       configPromise = null
-      return { googleClientId: '', googleDomains: [], passwordSignup: true }
+      return null
     })
     let live = true
-    configPromise.then((c) => live && setConfig(c))
+    configPromise.then((c) => { if (live) setConfig((old) => c || old || { googleClientId: '', googleDomains: [], passwordSignup: true }) })
     return () => { live = false }
   }, [])
   return config

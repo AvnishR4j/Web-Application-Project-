@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api } from '../api/client'
+import { api, peek } from '../api/client'
 
 const fmt = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 
 export default function MyBookings() {
-  const [items, setItems] = useState([])
-  const [names, setNames] = useState({})
+  const [items, setItems] = useState(() => peek('/api/bookings/mine') || [])
+  const [names, setNames] = useState(() => Object.fromEntries((peek('/api/resources?includeInactive=true') || []).map((r) => [r.id, r.name])))
   const [error, setError] = useState('')
   const [note, setNote] = useState('')
-  const [loaded, setLoaded] = useState(false)
+  const [loaded, setLoaded] = useState(() => Boolean(peek('/api/bookings/mine')))
 
   const load = useCallback(() => {
     Promise.all([api('/api/bookings/mine'), api('/api/resources?includeInactive=true')])
