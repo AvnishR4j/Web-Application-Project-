@@ -412,6 +412,8 @@ td .muted { font-size: 0.88rem; }
 .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--rose); margin-right: 9px; vertical-align: 3px; animation: breathe 2.4s ease-in-out infinite; }
 @keyframes breathe { 50% { opacity: 0.25; } }
 .tk-wrap.ended .tk-paper { opacity: 0.55; }
+.tk-wrap.focus .tk { outline: 2px solid var(--accent, #b4532a); outline-offset: 6px; border-radius: 4px; animation: tk-focus 2.4s ease-out 0.6s 1 both; }
+@keyframes tk-focus { 0% { outline-color: transparent; } 20% { outline-color: var(--accent, #b4532a); } 100% { outline-color: transparent; } }
 .tk-actions { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 0 4px; font-size: 0.88rem; }
 .tk-actions .muted { font-size: 0.85rem; }
 .tk-actions > form { width: 100%; }

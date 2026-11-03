@@ -10,7 +10,7 @@ const hm = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minu
  * stamp: a stamp that is already on the ticket (the stub is gone). Removing it later re-attaches the stub.
  */
 export default function Ticket({
-  start, end, title, club, venue, number, description, live, ended, day,
+  id, focus, start, end, title, club, venue, number, description, live, ended, day,
   seats, take, stubNote, stamp, actions, index = 0, onSettled,
 }) {
   const [phase, setPhase] = useState(stamp ? 'torn' : 'whole')
@@ -44,7 +44,7 @@ export default function Ticket({
   const r1 = index % 3 === 1 ? 0.35 : index % 3 === 2 ? -0.25 : 0
 
   return (
-    <article className={`tk-wrap${ended ? ' ended' : ''}`}>
+    <article id={id} className={`tk-wrap${ended ? ' ended' : ''}${focus ? ' focus' : ''}`}>
       <div className="tk-paper" style={{ '--delay': `${0.08 + index * 0.07}s`, '--r0': `${r0}deg`, '--r1': `${r1}deg` }}>
         <div className={`tk ${phase}`}>
           <div className="tk-main">
