@@ -182,9 +182,28 @@ export function applyLight(h) {
 /** Start following the real clock. Safe to call more than once. */
 export function startSunlight() {
   if (timer) return
+  setLite()
   applyLight(campusHour())
   timer = window.setInterval(() => { if (!playing) applyLight(campusHour()) }, 60000)
-  window.addEventListener('resize', () => applyLight(shown))
+  // Phones show and hide the address bar while you scroll, which fires "resize" with a new height. Only a real
+  // change of width (rotating, resizing) is worth recomputing the whole room for.
+  let lastW = window.innerWidth
+  let resizing = 0
+  window.addEventListener('resize', () => {
+    clearTimeout(resizing)
+    resizing = window.setTimeout(() => {
+      if (window.innerWidth === lastW) return
+      lastW = window.innerWidth
+      setLite()
+      applyLight(shown)
+    }, 200)
+  })
+}
+
+/** Phones, tablets and anything touch-first get a lighter version of the room: no animated or blended layers. */
+function setLite() {
+  const lite = window.matchMedia?.('(max-width: 980px), (pointer: coarse)').matches
+  document.documentElement.classList.toggle('lite', Boolean(lite))
 }
 
 export function onLight(fn) {
@@ -224,10 +243,14 @@ export function playDay(duration = 12000) {
 
 /** While someone drags the sun: show that hour, and hold off the clock. */
 let returning = 0
+let scrubFrame = 0
+let scrubTarget = 0
 export function scrubTo(h) {
   cancelAnimationFrame(returning)
   playing = true
-  applyLight(h)
+  scrubTarget = h
+  if (scrubFrame) return
+  scrubFrame = requestAnimationFrame(() => { scrubFrame = 0; applyLight(scrubTarget) })
 }
 
 /** Let go: the light glides back to the real time. */
