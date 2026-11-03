@@ -696,3 +696,11 @@ html:not(.fonts-ready) #root { opacity: 0; }
 .sunline:focus-visible .sunmark { outline: 1.5px solid var(--ink); outline-offset: 4px; }
 
 @media (max-width: 760px) { .search { width: 100%; } .search input { width: 100%; } }
+
+/* ---------- Phones and tablets: a lighter room, so scrolling and taps stay instant ---------- */
+.lite body::before { display: none; }
+.lite .rl.shafts, .lite .rl.lamp, .lite .rl.vignette, .lite .motes { display: none; }
+.lite .gobo { will-change: auto; }
+.lite .tk-paper { filter: none; }
+.lite .tk { box-shadow: 0 8px 16px -8px rgba(60, 45, 25, 0.38), 0 1px 2px rgba(60, 45, 25, 0.2); }
+.lite .tk-wrap:hover .tk { transform: none; }
