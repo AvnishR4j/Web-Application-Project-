@@ -1,10 +1,23 @@
 // Small fetch wrapper: adds the JWT, parses JSON, and throws an Error carrying the API's message.
 const TOKEN_KEY = 'campus.token'
 
+// The sign-in lives in localStorage, so it survives closing the tab or the browser and opening a link later.
+// (An older sign-in kept in sessionStorage is still honoured until it ends.)
 export const tokenStore = {
-  get: () => { try { return sessionStorage.getItem(TOKEN_KEY) } catch { return null } },
-  set: (t) => { forgetAll(); try { sessionStorage.setItem(TOKEN_KEY, t) } catch { /* private mode */ } },
-  clear: () => { forgetAll(); try { sessionStorage.removeItem(TOKEN_KEY) } catch { /* private mode */ } },
+  get: () => {
+    try { return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) } catch { return null }
+  },
+  set: (t) => {
+    forgetAll()
+    try { localStorage.setItem(TOKEN_KEY, t); sessionStorage.removeItem(TOKEN_KEY) } catch {
+      try { sessionStorage.setItem(TOKEN_KEY, t) } catch { /* private mode */ }
+    }
+  },
+  clear: () => {
+    forgetAll()
+    try { localStorage.removeItem(TOKEN_KEY) } catch { /* unavailable */ }
+    try { sessionStorage.removeItem(TOKEN_KEY) } catch { /* unavailable */ }
+  },
 }
 
 // Last-seen answers, kept for this browser tab. Pages draw these at once and refresh in the background,
