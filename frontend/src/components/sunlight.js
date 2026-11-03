@@ -146,8 +146,15 @@ export function applyLight(h) {
 
   // The window is above the page. Its light lands on the desk opposite the sun (the panes) and
   // is visible in the air as shafts running from the window to the panes (the beams).
-  const landX = W * (0.78 - k * 0.9)          // where the window light lands (morning: right, evening: left)
-  const landY = H * (0.42 + (1 - elev) * 0.12)
+  // The window's light is sized to the screen: the full 1000px frame on a desktop, a smaller one that fits
+  // inside the page (with a margin) on tablets and phones, taller on a portrait phone.
+  const portrait = H > W * 1.1
+  const gw = portrait ? Math.min(W * 0.84, 700) : Math.min(1000, W * 0.9)
+  const gh = portrait ? gw * 0.8 : gw * 0.52
+  const margin = Math.max(14, W * 0.04)
+  const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), Math.max(lo, hi))
+  const landX = clamp(W * (0.78 - k * 0.9), gw / 2 + margin, W - gw / 2 - margin)   // morning: right, evening: left
+  const landY = clamp(H * (0.42 + (1 - elev) * 0.12), gh / 2 + 70, H - gh / 2 - 30)
   const winX = W * (0.02 + k * 0.96)          // where the window is (towards the sun)
   const winY = -H * (0.15 + elev * 0.55)      // high sun: window far above, steep beams
   const dx = landX - winX
@@ -156,8 +163,13 @@ export function applyLight(h) {
   const length = Math.hypot(dx, dy) * 1.25
   const panes = document.getElementById('gobo')
   if (panes) {
-    panes.style.transform = `translate3d(${(landX - 500).toFixed(0)}px, ${(landY - 260).toFixed(0)}px, 0) skewX(${((0.5 - k) * 46).toFixed(1)}deg) scaleY(${(0.7 + (1 - elev) * 0.4).toFixed(3)})`
-    panes.style.opacity = up ? '1' : '0.9'
+    panes.style.width = `${gw.toFixed(0)}px`
+    panes.style.height = `${gh.toFixed(0)}px`
+    panes.style.gap = `${Math.round(gw * 0.026)}px`
+    panes.style.filter = `blur(${W < 700 ? 6 : 9}px)`
+    const skew = (0.5 - k) * 46 * Math.min(1, W / 1100)
+    panes.style.transform = `translate3d(${(landX - gw / 2).toFixed(0)}px, ${(landY - gh / 2).toFixed(0)}px, 0) skewX(${skew.toFixed(1)}deg) scaleY(${(0.7 + (1 - elev) * 0.4).toFixed(3)})`
+    panes.style.opacity = String((up ? 1 : 0.9) * (W < 700 ? 0.65 : 1))
   }
   const beams = document.getElementById('beams')
   if (beams) {
