@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, useWaking } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import AuthLayout from '../components/AuthLayout'
 import GoogleButton, { GoogleLogo, useAuthConfig } from '../components/GoogleButton'
@@ -42,6 +42,7 @@ export default function Login() {
   const [resendIn, setResendIn] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const waking = useWaking()
   const [mode, setMode] = useState(null)
   const [height, setHeight] = useState(undefined)
   const panes = useRef({})
@@ -223,6 +224,7 @@ export default function Login() {
           </section>
         </div>
 
+        {waking && !error && <p className="notice info signin-error" role="status">Waking the server up, one moment…</p>}
         {error && <p className="notice bad signin-error" role="alert">{error}</p>}
 
         {config.passwordSignup !== false && (

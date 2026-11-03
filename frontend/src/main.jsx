@@ -2,8 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import { warmUp } from './api/client'
 import { AuthProvider } from './auth/AuthContext'
 import './styles.css'
+
+warmUp() // wake the backend while the page loads
 
 // Start the entrance animations only once the fonts are in (or after 1.5 s on a slow connection).
 const ready = () => document.documentElement.classList.add('fonts-ready')

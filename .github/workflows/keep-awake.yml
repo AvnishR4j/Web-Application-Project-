@@ -1,11 +1,11 @@
 # Render's free plan puts the backend to sleep after 15 minutes without requests, and the next visitor then
-# waits about a minute. This pings the health check every 10 minutes so the site stays quick.
+# waits about a minute. This pings the health check every 5 minutes so the site stays quick.
 # GitHub pauses scheduled workflows after 60 days with no commits; re-enable it from the Actions tab if so.
 name: Keep backend awake
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
