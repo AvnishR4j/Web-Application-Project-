@@ -10,7 +10,7 @@ app:
   jwt:
     # Must be at least 32 characters. Override with the JWT_SECRET environment variable.
     secret: ${JWT_SECRET:dev-only-secret-change-me-dev-only-secret-change-me}
-    expiry-minutes: ${JWT_EXPIRY_MINUTES:120}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:43200}
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
   booking:
