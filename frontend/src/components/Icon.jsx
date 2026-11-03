@@ -36,7 +36,12 @@ export default function Icon({ name, title, ...rest }) {
   )
 }
 
-/** The Campus Board wordmark, set in the serif like a printed programme. */
+/** The Campus Board medallion with its name, set in the serif like a printed programme. */
 export function BrandMark() {
-  return <span className="wordmark">Campus Board</span>
+  return (
+    <span className="brandmark">
+      <img className="brand-logo" src="/logo-mark.png" alt="" width="40" height="40" decoding="async" />
+      <span className="wordmark">Campus Board</span>
+    </span>
+  )
 }
