@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react'
+
 // Small fetch wrapper: adds the JWT, parses JSON, and throws an Error carrying the API's message.
 const TOKEN_KEY = 'campus.token'
 
@@ -86,27 +88,52 @@ export function api(path, options = {}) {
 
 const OFFLINE = "Couldn't reach the server. If the site was idle it can take up to a minute to wake up, so please try again."
 
-async function request(path, { method = 'GET', body, headers: extra = {} } = {}, attempt = 1) {
+// While the free backend wakes from sleep, requests are retried quietly and the page can say so.
+const RETRY_AFTER_MS = [2500, 4000, 6000, 8000, 10000, 10000]
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+let waking = false
+const wakingListeners = new Set()
+function setWaking(v) {
+  if (waking === v) return
+  waking = v
+  wakingListeners.forEach((f) => f())
+}
+/** True while a request is being retried because the server has not answered yet. */
+export function useWaking() {
+  return useSyncExternalStore((f) => { wakingListeners.add(f); return () => wakingListeners.delete(f) }, () => waking)
+}
+/** Poke the backend as soon as the site opens, so it is awake by the time someone signs in. */
+export function warmUp() {
+  fetch('/api/health', { cache: 'no-store' }).catch(() => {})
+}
+
+async function request(path, { method = 'GET', body, headers: extra = {} } = {}) {
   const headers = { 'Content-Type': 'application/json', ...extra }
   const token = tokenStore.get()
   if (token) headers.Authorization = `Bearer ${token}`
+  // Reads and sign-in calls are safe to repeat when the server never answered; other writes are left to the person.
+  const retriable = method === 'GET' || path.startsWith('/api/auth/')
 
   let res
-  try {
-    res = await fetch(path, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    })
-  } catch {
-    // The browser got no answer at all (Safari says "Load failed", Chrome "Failed to fetch").
-    // Reads are safe to repeat once; anything that changes data is left for the person to retry.
-    if (method === 'GET' && attempt === 1) {
-      await new Promise((r) => setTimeout(r, 2500))
-      return request(path, { method, body, headers: extra }, 2)
+  for (let attempt = 0; ; attempt++) {
+    const more = retriable && attempt < RETRY_AFTER_MS.length
+    try {
+      res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+    } catch {
+      // The browser got no answer at all (Safari says "Load failed", Chrome "Failed to fetch").
+      if (more) { setWaking(true); await sleep(RETRY_AFTER_MS[attempt]); continue }
+      setWaking(false)
+      throw new ApiError(0, OFFLINE)
     }
-    throw new ApiError(0, OFFLINE)
+    // A gateway error means the server is starting up or restarting; 504 may mean the work ran, so only reads retry it.
+    if (more && (res.status === 502 || res.status === 503 || (res.status === 504 && method === 'GET'))) {
+      setWaking(true)
+      await sleep(RETRY_AFTER_MS[attempt])
+      continue
+    }
+    break
   }
+  setWaking(false)
 
   const text = await res.text()
   let data = null
