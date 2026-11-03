@@ -141,9 +141,7 @@ public class Notifications {
                     sendAll(organizers, h, t.page(h,
                             para("Your event is approved, the venue is confirmed, and students can now register.") + eventDetails(ev),
                             "Open my events", t.link("/my-events"), null, null));
-                    if (e.from() == EventStatus.ADVISOR_APPROVED) {
-                        announce(ev, club);
-                    }
+                    announce(ev, club);
                 }
                 case REJECTED -> {
                     String h = "Not approved: " + ev.getTitle();
@@ -174,8 +172,9 @@ public class Notifications {
         q.fields().include("email");
         List<User> students = mongo.find(q, User.class);
         String h = "New event: " + ev.getTitle();
-        String intro = clubName(club) + " just announced an event.";
-        String desc = ev.getDescription() == null || ev.getDescription().isBlank() ? "" : para(trim(ev.getDescription(), 400));
+        String intro = clubName(club) + " has announced a new event, and registration is open. Here is what it is about:";
+        String link = t.link("/events?e=" + enc(ev.getId()));
+        String desc = ev.getDescription() == null || ev.getDescription().isBlank() ? "" : para(trim(ev.getDescription(), 600));
         List<Message> out = new ArrayList<>();
         for (User s : students) {
             if (!MailAddresses.deliverable(s.getEmail())) {
@@ -183,7 +182,7 @@ public class Notifications {
             }
             String unsub = t.link("/unsubscribe?email=" + enc(s.getEmail()) + "&token=" + unsubscribe.sign(s.getEmail()));
             out.add(new Message(s.getEmail(), h, t.page(h, para(intro) + desc + eventDetails(ev),
-                    "See it and register", t.link("/events"),
+                    "See it and register", link,
                     "You get these because you're a student on Campus Board.", unsub)));
         }
         if (!out.isEmpty()) {

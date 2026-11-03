@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { byDay, dayLabel } from '../components/Ticket'
 import useProgramme from '../components/useProgramme'
 
@@ -6,6 +7,14 @@ import useProgramme from '../components/useProgramme'
 export default function Events() {
   const { events, clubs, rooms, loaded, error, ticketFor } = useProgramme()
   const [query, setQuery] = useState('')
+  const [params] = useSearchParams()
+  const target = params.get('e') // an emailed link lands on that event
+
+  useEffect(() => {
+    if (!loaded || !target) return
+    const el = document.getElementById(`event-${target}`)
+    if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 500)
+  }, [loaded, target])
 
   const q = query.trim().toLowerCase()
   const shown = events.filter((e) => !q || [e.title, e.description, clubs[e.clubId]?.name, rooms[e.resourceId]?.name]
@@ -33,7 +42,7 @@ export default function Events() {
       ) : byDay(shown, (e) => e.start).map((g) => (
         <section key={g.key}>
           <h2 className="date-group">{dayLabel(g.date)}</h2>
-          <div className="ticket-grid">{g.items.map((e) => ticketFor(e, n++, { describe: true }))}</div>
+          <div className="ticket-grid">{g.items.map((e) => ticketFor(e, n++, { describe: true, focus: e.id === target }))}</div>
         </section>
       ))}
     </div>

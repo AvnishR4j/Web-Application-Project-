@@ -40,7 +40,7 @@ export default function useProgramme() {
     }
   }
 
-  function ticketFor(e, i, { describe = false, dated = false } = {}) {
+  function ticketFor(e, i, { describe = false, dated = false, focus = false } = {}) {
     const s = state.seats[e.id]
     const now = Date.now()
     const started = new Date(e.start).getTime() <= now
@@ -64,7 +64,7 @@ export default function useProgramme() {
       {s.myStatus === 'WAITLISTED' && <span className="muted">You move up automatically if someone cancels.</span>}
     </>) : null
     return (
-      <Ticket key={e.id} index={i} start={e.start} end={e.end} title={e.title}
+      <Ticket key={e.id} id={`event-${e.id}`} focus={focus} index={i} start={e.start} end={e.end} title={e.title}
         club={state.clubs[e.clubId]?.name} venue={state.rooms[e.resourceId]?.name} number={serial(e.id)}
         description={describe ? e.description : null} day={dated ? dayLabel(new Date(e.start)) : null}
         live={started && !ended} ended={ended}
