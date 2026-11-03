@@ -17,6 +17,7 @@ import com.campus.booking.model.RegistrationStatus;
 import com.campus.booking.model.Resource;
 import com.campus.booking.model.Role;
 import com.campus.booking.model.User;
+import com.campus.booking.repository.AuditLogRepository;
 import com.campus.booking.repository.BookingRepository;
 import com.campus.booking.repository.ClubRepository;
 import com.campus.booking.repository.EventRepository;
@@ -57,11 +58,12 @@ public class Notifications {
     private final RegistrationRepository registrations;
     private final BookingRepository bookings;
     private final UserRepository users;
+    private final AuditLogRepository audit;
     private final MongoTemplate mongo;
 
     public Notifications(Mailer mailer, MailTemplates t, UnsubscribeTokens unsubscribe, EventRepository events,
                          ClubRepository clubs, ResourceRepository resources, RegistrationRepository registrations,
-                         BookingRepository bookings, UserRepository users, MongoTemplate mongo) {
+                         BookingRepository bookings, UserRepository users, AuditLogRepository audit, MongoTemplate mongo) {
         this.mailer = mailer;
         this.t = t;
         this.unsubscribe = unsubscribe;
@@ -71,6 +73,7 @@ public class Notifications {
         this.registrations = registrations;
         this.bookings = bookings;
         this.users = users;
+        this.audit = audit;
         this.mongo = mongo;
     }
 
@@ -141,7 +144,12 @@ public class Notifications {
                     sendAll(organizers, h, t.page(h,
                             para("Your event is approved, the venue is confirmed, and students can now register.") + eventDetails(ev),
                             "Open my events", t.link("/my-events"), null, null));
-                    announce(ev, club);
+                    // Everyone hears about an event once. Fixing a name or time and approving again does not mail them again.
+                    long approvals = audit.findByEventIdOrderByAtAsc(ev.getId()).stream()
+                            .filter((a) -> a.getToStatus() == EventStatus.APPROVED).count();
+                    if (approvals <= 1) {
+                        announce(ev, club);
+                    }
                 }
                 case REJECTED -> {
                     String h = "Not approved: " + ev.getTitle();
