@@ -49,6 +49,7 @@ app:
   base-url: ${APP_BASE_URL:https://campus-board-sepia-five.vercel.app}
   # One-time clean-up for demos: see DemoDataReset. Switch on, restart, switch off.
   reset-demo-data: ${RESET_DEMO_DATA:false}
+  clear-demo-data: ${CLEAR_DEMO_DATA:false}
 
 server:
   port: 8080
